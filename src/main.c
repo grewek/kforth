@@ -11,6 +11,8 @@
 
 #define STACK_SIZE 256
 
+//TODO: Seperate into different files for a better overview...
+
 typedef uint64_t u64;
 typedef uint32_t u32;
 typedef uint16_t u16;
@@ -35,10 +37,13 @@ typedef enum {
     LESSTHAN,
     GREATERTHAN,
     EQUAL,
+    SWAP,
+    DUP,
 } Operation;
 
 typedef struct {
     //TODO: The stack size should be determined at runtime...
+    //TODO: The stack currently can only hold f32 values should it be able to hold different values ?
     f32 values[STACK_SIZE];
     unsigned int stackPtr;
 } Stack;
@@ -60,7 +65,8 @@ f32 Pop(Stack *stack) {
     if(stack->stackPtr > 0) {
         stack->stackPtr--;
     } else {
-        stack->stackPtr = 0;
+        fprintf(stderr, "ERROR: Stack underflow\n");
+        exit(1); //TODO: Think of a way of catching the error and handling it gracefully ?
     }
 
     f32 result = stack->values[stack->stackPtr];
@@ -93,14 +99,29 @@ f32 LessThan(f32 a, f32 b) {
 }
 
 f32 GreaterThan(f32 a, f32 b) {
+    //NOTE: According to the forth specs all values other than 0 are truthy values, but it seems like that -1.0 is the standard
+    //      value...
     return a > b ? -1.0 : 0.0;
 }
 
-typedef f32 (*UnaryOp)(f32);
-typedef f32 (*BinaryOp)(f32, f32);
+f32 DuplicateValue(f32 *a) {
+    //TODO: This is just wasted cyles really, but if we want to make it work through UnaryReferenceOperation there is no other way really...
+    //TODO cont.: we could make a seperate function that is not based UnaryReference option and save some cycles though...
+    return *a;
+}
 
-void UnaryOperation(Stack *stack, UnaryOp op) {
-    f32 a = Pop(stack);
+void SwapValues(f32 *a, f32 *b) {
+    f32 temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+typedef f32 (*UnaryOpRef)(f32 *); 
+typedef f32 (*BinaryOp)(f32, f32);
+typedef void (*BinaryRefOp)(f32 *, f32 *);
+//TODO: Delete me...
+void UnaryReferenceOperation(Stack *stack, UnaryOpRef op) {
+    f32 *a = &stack->values[stack->stackPtr - 1];
 
     f32 result = op(a);
 
@@ -121,6 +142,14 @@ void BinaryOperation(Stack *stack, BinaryOp op, bool reverse) {
     Push(stack, result);
 }
 
+void BinaryReferenceOperation(Stack *stack, BinaryRefOp op) {
+    //This fails if there are not enough elements on the stack...
+    f32 *refA = &stack->values[stack->stackPtr - 1];
+    f32 *refB = &stack->values[stack->stackPtr - 2];
+
+    op(refA, refB);
+}
+
 void Output(Stack *stack) {
     f32 a = Pop(stack);
 
@@ -130,6 +159,8 @@ void Output(Stack *stack) {
 
 void HandleOperation(Command *cmd, Stack *stack) {
 
+    //TODO: Find out if there are any extensions for c that checks whether or not we are covering all the things in the
+    //      enumeration...
     switch(cmd->operation) {
         case PUSH: 
         Push(stack, cmd->value);
@@ -167,21 +198,21 @@ void HandleOperation(Command *cmd, Stack *stack) {
         BinaryOperation(stack, LessThan, true);
         break;
 
+        case SWAP:
+        BinaryReferenceOperation(stack, SwapValues);
+        break;
+
         case OUTPUT:
         Output(stack);
         break;
 
-        /*case DUMP:
-        Dump(stack);
-        break;*/
-
-        default: break;
+        case DUP:
+        UnaryReferenceOperation(stack, DuplicateValue);
     }
 }
 
 typedef enum {
     T_VALUE,
-    T_OPERATOR,
     T_PLUS,
     T_MINUS,
     T_DOT,
@@ -190,6 +221,8 @@ typedef enum {
     T_EQUAL,
     T_LESSTHAN,
     T_GREATERTHAN,
+    T_SWAP,
+    T_DUP,
 } TokenType;
 
 typedef struct  {
@@ -216,6 +249,14 @@ char Peek(const char *buffer, i32 *currentPosition, i32 size) {
     exit(1);
 }
 
+char *TokenString(char *buffer, i32 start, i32 length) {
+    char *result = calloc(length, sizeof(char));
+    char *startOfToken = buffer + start;
+    memcpy(result, startOfToken, length);
+
+    return result;
+}
+
 Token ScanValue(char *buffer, i32 *position, i32 size) {
     Token result = {0};
     result.start = *position;
@@ -225,17 +266,36 @@ Token ScanValue(char *buffer, i32 *position, i32 size) {
     }
 
     result.end = *position;
-    
-    result.length = (result.end - result.start) + 1;
-    result.repr.buffer = calloc(result.length, sizeof(char));
-    char *startOfToken = buffer + result.start;
-    memcpy(result.repr.buffer, startOfToken, result.length);
-
+    result.length = ((result.end + 1) - result.start);
+    result.repr.buffer = TokenString(buffer, result.start, result.length);
     result.tt = T_VALUE;
     return result;
 }
 
-Token ScanOperator(char *buffer, i32 position, i32 size) {
+Token ScanWord(char *buffer, i32 *position, i32 size) {
+    Token result = {0};
+    result.start  = *position;
+
+    while(*position < size - 1 && (islower(Peek(buffer, position, size)) || isupper(Peek(buffer,position, size)))) {
+        *position += 1;
+    }
+
+    result.end = *position;
+    result.length = ((result.end + 1) - result.start);
+    result.repr.buffer = TokenString(buffer, result.start, result.length);
+
+    if(strcmp(result.repr.buffer, "swap") == 0) {
+        result.tt = T_SWAP;
+    }
+
+    if(strcmp(result.repr.buffer, "dup") == 0) {
+        result.tt = T_DUP;
+    }
+    
+    return result;
+}
+
+Token ScanOperator(char *buffer, i32 position) {
     Token result = {0};
     result.start = position;
     result.end = position;
@@ -315,6 +375,20 @@ int main(int argc, char **argv) {
     i32 nextFreeToken;
     while(position < st.st_size) 
     {
+        //TODO: The lexer needs to recognize symbols that are longer than one symbol
+        //TODO: There are words in forth as well so we need to handle all the letters
+        //TODO: Refactor this process out of the main function
+        //TODO: We could advance position and nextFreeToken at the end of the loop instead of doing in every branch...
+        //TODO: The token list is on the stack right now and has only space for 512 tokens this will probably not suffice
+        //      for a real forth program so we need to make this dynamic sooner or later
+        char currentChar = tempBuffer[position];
+        if(islower(currentChar)) {
+            //TODO: We need to parse a word here...
+            tempToken[nextFreeToken] = ScanWord(tempBuffer, &position, st.st_size);
+            position++;
+            nextFreeToken++;
+            continue;
+        }
 
         if(isdigit(tempBuffer[position])) {
             tempToken[nextFreeToken] = ScanValue(tempBuffer, &position, st.st_size);
@@ -324,7 +398,7 @@ int main(int argc, char **argv) {
         }
 
         if(ispunct(tempBuffer[position])) {
-            tempToken[nextFreeToken] = ScanOperator(tempBuffer, position, st.st_size);
+            tempToken[nextFreeToken] = ScanOperator(tempBuffer, position);
             position++;
             nextFreeToken++;
             continue;
@@ -335,44 +409,65 @@ int main(int argc, char **argv) {
         }
     }
 
-    Stack stack = {0};
+    //Parsing the lexed application into executable forth code
     Command program[512] = {0};
-
     i32 nextFreeInstruction = 0;
     for(i32 i = 0; i < nextFreeToken; i++) {
-        if(tempToken[i].tt == T_VALUE) {
-            //Push these to the stack
-            program[nextFreeInstruction].operation = PUSH;
-            program[nextFreeInstruction].value = atof(tempToken[i].repr.buffer);
-        }
+        
+        Token *currentToken = &tempToken[i];
+        switch(currentToken->tt) {
+            case T_VALUE:
+                program[nextFreeInstruction].operation = PUSH;
+                program[nextFreeInstruction].value = atof(currentToken->repr.buffer);
+            break;
+            
+            case T_PLUS:
+                program[nextFreeInstruction].operation = PLUS;
+            break;
+            
+            case T_MINUS:
+                program[nextFreeInstruction].operation = MINUS;
+            break;
 
-        if(tempToken[i].tt == T_PLUS) {
-            program[nextFreeInstruction].operation = PLUS;
-        }
+            case T_DOT:
+                program[nextFreeInstruction].operation = OUTPUT;
+            break;
+            
+            case T_MULTIPLY:
+                program[nextFreeInstruction].operation = MULTIPLY;
+            break;
+            
+            case T_DIVIDE:
+                program[nextFreeInstruction].operation = DIVIDE;
+            break;
+            
+            case T_LESSTHAN:
+                program[nextFreeInstruction].operation = LESSTHAN;
+            break;
+            
+            case T_GREATERTHAN:
+                program[nextFreeInstruction].operation = GREATERTHAN;
+            break;
+            
+            case T_EQUAL:
+                program[nextFreeInstruction].operation = EQUAL;
+            break;
+            
+            case T_SWAP:
+                program[nextFreeInstruction].operation = SWAP;
+            break;
 
-        if(tempToken[i].tt == T_DOT) {
-            program[nextFreeInstruction].operation = OUTPUT;
-        }
-
-        if(tempToken[i].tt == T_MULTIPLY) {
-            program[nextFreeInstruction].operation = MULTIPLY;
-        }
-
-        if(tempToken[i].tt == T_LESSTHAN) {
-            program[nextFreeInstruction].operation = LESSTHAN;
-        }
-
-        if(tempToken[i].tt == T_GREATERTHAN) {
-            program[nextFreeInstruction].operation = GREATERTHAN;
-        }
-
-        if(tempToken[i].tt == T_EQUAL) {
-            program[nextFreeInstruction].operation = EQUAL;
+            case T_DUP:
+                program[nextFreeInstruction].operation = DUP;
+            break;
         }
 
         nextFreeInstruction++;
+
     }
 
+    //Execution of the parsed application...
+    Stack stack = {0};
     for(i32 i = 0; i < nextFreeInstruction; i++) {
         HandleOperation(&program[i], &stack);
     }
