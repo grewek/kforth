@@ -1,35 +1,15 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <assert.h>
-#include <string.h>
+
 #include <stdbool.h>
 #include <ctype.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include "base_types.h"
 #include "lexer.h"
 #include "token_list.h"
-//#include "token.h"
 
 #define STACK_SIZE 256
 
 //TODO: Seperate into different files for a better overview...
-
-/*typedef uint64_t u64;
-typedef uint32_t u32;
-typedef uint16_t u16;
-typedef uint8_t u8;
-
-typedef int64_t i64;
-typedef int32_t i32;
-typedef int16_t i16;
-typedef int8_t i8;
-
-typedef float f32;
-typedef float f64;*/
 
 typedef enum {
     PUSH,
@@ -165,9 +145,6 @@ void Output(Stack *stack) {
 
 
 void HandleOperation(Command *cmd, Stack *stack) {
-
-    //TODO: Find out if there are any extensions for c that checks whether or not we are covering all the things in the
-    //      enumeration...
     switch(cmd->operation) {
         case PUSH: 
         Push(stack, cmd->value);
@@ -249,7 +226,7 @@ TokenType PeekNextToken(Token *tokenList, i32 tokenListSize,  i32 currentPositio
 }
 
 void ParseForthProgram(Program *prog, TokenList *tokenList) {
-        for(u32 i = 0; i < tokenList->size; i++) {
+    for(u32 i = 0; i < tokenList->_elementCount; i++) {
         
         Token currentToken = PopToken(tokenList);
         switch(currentToken.tt) {
@@ -299,15 +276,15 @@ void ParseForthProgram(Program *prog, TokenList *tokenList) {
             break;
 
             case T_COLON:
-            //TODO: This means the user declares a new function / procedure the next thing in the list should be the name
-            //      of the function, after that the body of the function follows ';' marks the end of the function
-            //IMPROVMENT: Forth uses ';' as a end marker but personally would like the word 'end' better...
+                printf("TODO: Function declaration parsing !\n");
             break;
             
             case T_SEMICOLON:
+                printf("TODO: Function definiton end parsing !\n");
             break;
 
             case T_WORD:
+                printf("TODO: Function calling parsin\n");
             break;  
         }
 
@@ -317,34 +294,13 @@ void ParseForthProgram(Program *prog, TokenList *tokenList) {
 
 
 int main(int argc, char **argv) {
-       if(argc < 2) {
+    if(argc < 2) {
         fprintf(stderr, "USAGE: kforth [path]\n");
         exit(1);
     }
     const char *path = argv[1];
-    struct stat st;
-    stat(path, &st);
 
-    FILE *inputFile = fopen(path, "r");
-    //TODO: This is a temporary buffer and should be replaced by a dynamically allocated one !
-    char tempBuffer[1024] = {0};
-
-    if(st.st_size >= 1024) {
-        fprintf(stderr, "TODO: File size too big for tempBuffer replace tempbuffer with dynamic memory !");
-        fclose(inputFile);
-        exit(1);
-    }
-
-    i32 readBytes = fread(&tempBuffer, 1, st.st_size, inputFile);
-    fclose(inputFile);
-    
-    if(readBytes < st.st_size) {
-        fprintf(stderr, "ERROR: Could not read the whole filestream");
-        fclose(inputFile);
-        exit(1);
-    }
-
-    TokenList list = GenerateTokenList(tempBuffer, st.st_size);
+    TokenList list = GenerateTokenList(path);
     Program forthProgram = InitializeProgram();
     ParseForthProgram(&forthProgram, &list);
 

@@ -1,5 +1,8 @@
 #ifndef _TOKEN_H_
 #define _TOKEN_H_
+
+#include "base_types.h"
+
 typedef enum {
     T_VALUE,
     T_PLUS,
@@ -17,7 +20,7 @@ typedef enum {
     T_WORD,
 } TokenType;
 
-typedef struct  {
+typedef struct {
     TokenType tt;
 
     i32 start;

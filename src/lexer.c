@@ -1,26 +1,33 @@
 #include "lexer.h"
-#include "token_list.h"
-#include "token.h"
-#include "base_types.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <ctype.h>
+Lexer InitializeLexer(const char *sourceFilePath) {
+    Lexer result = {0};
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <string.h>
+    struct stat st;
+    stat(sourceFilePath, &st);
 
-/*TokenType PeekNextLetter(Token *tokenList, i32 tokenListSize,  i32 currentPosition) {
-    i32 nextTokenPos = currentPosition + 1;
+    FILE *source = fopen(sourceFilePath, "r");
+    result.size = st.st_size;
+    result.source = calloc(st.st_size, sizeof(char));
 
-    if(nextTokenPos < tokenListSize) {
-        return tokenList[nextTokenPos].tt;
-    } else {
-        fprintf(stderr, "ERROR: Out of Tokens peeking not possible !");
+    if(result.source == NULL) {
+        fprintf(stderr, "ERROR: Could not allocate memory for the source file !");
+        fclose(source);
         exit(1);
     }
-}*/
+
+    u64 readBytes = fread(result.source, 1, result.size, source);
+    fclose(source);
+
+    if(readBytes < result.size) {
+        fprintf(stderr, "ERROR: Could not read the whole filestream");
+        free(result.source);
+        fclose(source);
+        exit(1);
+    }
+
+    return result;
+}
 
 char *TokenString(char *buffer, u64 start, u64 length) {
     char *result = calloc(length + 1, sizeof(char));
@@ -35,41 +42,50 @@ char *TokenString(char *buffer, u64 start, u64 length) {
     return result;
 }
 
-char PeekNextLetter(const char *buffer, u64 *currentPosition, u64 size) {
-    if(*currentPosition < size) {
-        return buffer[*currentPosition + 1];
+char PeekCharacter(Lexer *lexer) {
+    if(lexer->position < lexer->size) {
+        return lexer->source[lexer->position + 1];
     }
 
     fprintf(stderr, "ERROR: Tried to peak behind the buffer !");
     exit(1);
 }
 
-Token ScanValue(char *buffer, u64 *position, u64 size) {
-    Token result = {0};
-    result.start = *position;
-    
-    while(*position < size - 1 && isdigit(PeekNextLetter(buffer, position, size))) {
-        *position += 1;
+void ConsumeCharacter(Lexer *lexer) {
+    if(lexer->position >= lexer->size) {
+        fprintf(stderr, "ERROR: Out of Characters to consume !");
+        exit(1);
     }
 
-    result.end = *position;
+    lexer->position += 1;
+}
+
+Token ScanValue(Lexer *lexer) {
+    Token result = {0};
+    result.start = lexer->position;
+    
+    while(lexer->position < (lexer->size - 1) && isdigit(PeekCharacter(lexer))) {
+        ConsumeCharacter(lexer);
+    }
+
+    result.end = lexer->position;
     result.length = ((result.end + 1) - result.start);
-    result.repr.buffer = TokenString(buffer, result.start, result.length);
+    result.repr.buffer = TokenString(lexer->source, result.start, result.length);
     result.tt = T_VALUE;
     return result;
 }
 
-Token ScanWord(char *buffer, u64 *position, u64 size) {
+Token ScanWord(Lexer *lexer) {
     Token result = {0};
-    result.start  = *position;
+    result.start  = lexer->position;
 
-    while(*position < size - 1 && (islower(PeekNextLetter(buffer, position, size)) || isupper(PeekNextLetter(buffer,position, size)))) {
-        *position += 1;
+    while(lexer->position < (lexer->size - 1) && (islower(PeekCharacter(lexer)) || isupper(PeekCharacter(lexer)))) {
+        ConsumeCharacter(lexer);
     }
 
-    result.end = *position;
+    result.end = lexer->position;
     result.length = ((result.end + 1) - result.start);
-    result.repr.buffer = TokenString(buffer, result.start, result.length);
+    result.repr.buffer = TokenString(lexer->source, result.start, result.length);
 
     if(strcmp(result.repr.buffer, "swap") == 0) {
         result.tt = T_SWAP;
@@ -82,12 +98,13 @@ Token ScanWord(char *buffer, u64 *position, u64 size) {
     return result;
 }
 
-Token ScanOperator(char *buffer, u64 position) {
+Token ScanOperator(Lexer *lexer) {
     Token result = {0};
-    result.start = position;
-    result.end = position;
+    result.start = lexer->position;
+    result.end = lexer->position;
+    //TODO: There are symbols with more than one character i.e. comments, we need to handle these as well
     result.length = 1;
-    switch(buffer[position]) {
+    switch(lexer->source[lexer->position]) {
         case ':':
             result.tt = T_COLON;
             result.repr.symbol = ':';
@@ -138,36 +155,37 @@ Token ScanOperator(char *buffer, u64 position) {
 }
 
 
-TokenList GenerateTokenList(char *buffer, u64 size)
+TokenList GenerateTokenList(const char *sourcePath)
 {
-    u64 position = 0;
+    Lexer lexer = InitializeLexer(sourcePath);
     TokenList tokens = InitializeTokenList();
-    while(position < size) 
+    while(lexer.position < lexer.size)
     {
-        char currentChar = buffer[position];
+        char currentChar = lexer.source[lexer.position];
         if(islower(currentChar)) {
-            //TODO: We need to parse a word here...
-            PushToken(&tokens, ScanWord(buffer, &position, size));
-            position++;
+            PushToken(&tokens, ScanWord(&lexer));
+            ConsumeCharacter(&lexer);
             continue;
         }
 
-        if(isdigit(buffer[position])) {
-            PushToken(&tokens, ScanValue(buffer, &position, size));
-            position++;
+        if(isdigit(currentChar)) {
+            PushToken(&tokens, ScanValue(&lexer));
+            ConsumeCharacter(&lexer);
             continue;
         }
 
-        if(ispunct(buffer[position])) {
-            PushToken(&tokens, ScanOperator(buffer, position));
-            position++;
+        if(ispunct(currentChar)) {
+            PushToken(&tokens, ScanOperator(&lexer));
+            ConsumeCharacter(&lexer);
             continue;
         }
         
-        if(isspace(buffer[position])) {
-            position++;
+        if(isspace(currentChar)) {
+            ConsumeCharacter(&lexer);
         }
     }
 
+    //NOTE: We free the source buffer here...
+    free(lexer.source);
     return tokens;
 }
