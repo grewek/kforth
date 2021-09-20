@@ -9,6 +9,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "lexer.h"
+#include "token_list.h"
+//#include "token.h"
+
 #define STACK_SIZE 256
 
 //TODO: Seperate into different files for a better overview...
@@ -39,6 +43,8 @@ typedef enum {
     EQUAL,
     SWAP,
     DUP,
+    SUBROUTINE,
+    WORD,
 } Operation;
 
 typedef struct {
@@ -206,143 +212,111 @@ void HandleOperation(Command *cmd, Stack *stack) {
         Output(stack);
         break;
 
+        case SUBROUTINE:
+        printf("What todo here ? do we really need this ?\n");
+        break;
+
+        case WORD:
+        printf("If we encounter a word that isn't part of the forth specs we should try to call it from the program dictionary\n");
+        break;
+
         case DUP:
         UnaryReferenceOperation(stack, DuplicateValue);
+        break;
     }
 }
 
-typedef enum {
-    T_VALUE,
-    T_PLUS,
-    T_MINUS,
-    T_DOT,
-    T_MULTIPLY,
-    T_DIVIDE,
-    T_EQUAL,
-    T_LESSTHAN,
-    T_GREATERTHAN,
-    T_SWAP,
-    T_DUP,
-} TokenType;
+typedef struct Program {
+    Command instructions[1024];
+    i32 size;
+} Program;
 
-typedef struct  {
-    TokenType tt;
-
-    i32 start;
-    i32 end;
-    i32 length;
-
-    union {
-        char *buffer;
-        char symbol;
-    } repr;
-    
-
-} Token;
-
-char Peek(const char *buffer, i32 *currentPosition, i32 size) {
-    if(*currentPosition < size) {
-        return buffer[*currentPosition + 1];
-    }
-
-    fprintf(stderr, "ERROR: Tried to peak behind the buffer !");
-    exit(1);
-}
-
-char *TokenString(char *buffer, i32 start, i32 length) {
-    char *result = calloc(length, sizeof(char));
-    char *startOfToken = buffer + start;
-    memcpy(result, startOfToken, length);
-
+Program InitializeProgram() {
+    Program result = {0};
     return result;
 }
 
-Token ScanValue(char *buffer, i32 *position, i32 size) {
-    Token result = {0};
-    result.start = *position;
-    
-    while(*position < size - 1 && isdigit(Peek(buffer, position, size))) {
-        *position += 1;
-    }
+TokenType PeekNextToken(Token *tokenList, i32 tokenListSize,  i32 currentPosition) {
+    i32 nextTokenPos = currentPosition + 1;
 
-    result.end = *position;
-    result.length = ((result.end + 1) - result.start);
-    result.repr.buffer = TokenString(buffer, result.start, result.length);
-    result.tt = T_VALUE;
-    return result;
+    if(nextTokenPos < tokenListSize) {
+        return tokenList[nextTokenPos].tt;
+    } else {
+        fprintf(stderr, "ERROR: Out of Tokens peeking not possible !");
+        exit(1);
+    }
 }
 
-Token ScanWord(char *buffer, i32 *position, i32 size) {
-    Token result = {0};
-    result.start  = *position;
+void ParseForthProgram(Program *prog, TokenList *tokenList) {
+        for(u32 i = 0; i < tokenList->size; i++) {
+        
+        Token currentToken = PopToken(tokenList);
+        switch(currentToken.tt) {
+            case T_VALUE:
+                prog->instructions[prog->size].operation = PUSH;
+                prog->instructions[prog->size].value = atof(currentToken.repr.buffer);
+            break;
+            
+            case T_PLUS:
+                prog->instructions[prog->size].operation = PLUS;
+            break;
+            
+            case T_MINUS:
+                prog->instructions[prog->size].operation = MINUS;
+            break;
 
-    while(*position < size - 1 && (islower(Peek(buffer, position, size)) || isupper(Peek(buffer,position, size)))) {
-        *position += 1;
+            case T_DOT:
+                prog->instructions[prog->size].operation = OUTPUT;
+            break;
+            
+            case T_MULTIPLY:
+                prog->instructions[prog->size].operation = MULTIPLY;
+            break;
+            
+            case T_DIVIDE:
+                prog->instructions[prog->size].operation = DIVIDE;
+            break;
+            
+            case T_LESSTHAN:
+                prog->instructions[prog->size].operation = LESSTHAN;
+            break;
+            
+            case T_GREATERTHAN:
+                prog->instructions[prog->size].operation = GREATERTHAN;
+            break;
+            
+            case T_EQUAL:
+                prog->instructions[prog->size].operation = EQUAL;
+            break;
+            
+            case T_SWAP:
+                prog->instructions[prog->size].operation = SWAP;
+            break;
+
+            case T_DUP:
+                prog->instructions[prog->size].operation = DUP;
+            break;
+
+            case T_COLON:
+            //TODO: This means the user declares a new function / procedure the next thing in the list should be the name
+            //      of the function, after that the body of the function follows ';' marks the end of the function
+            //IMPROVMENT: Forth uses ';' as a end marker but personally would like the word 'end' better...
+            break;
+            
+            case T_SEMICOLON:
+            break;
+
+            case T_WORD:
+            break;  
+        }
+
+        prog->size += 1;
     }
-
-    result.end = *position;
-    result.length = ((result.end + 1) - result.start);
-    result.repr.buffer = TokenString(buffer, result.start, result.length);
-
-    if(strcmp(result.repr.buffer, "swap") == 0) {
-        result.tt = T_SWAP;
-    }
-
-    if(strcmp(result.repr.buffer, "dup") == 0) {
-        result.tt = T_DUP;
-    }
-    
-    return result;
 }
 
-Token ScanOperator(char *buffer, i32 position) {
-    Token result = {0};
-    result.start = position;
-    result.end = position;
-    switch(buffer[position]) {
-        case '.':
-            result.tt = T_DOT;
-            result.repr.symbol = '.';
-        break;
-        case '+':
-            result.tt = T_PLUS;
-            result.repr.symbol = '+';
-        break;
-        case '-':
-            result.tt = T_MINUS;
-            result.repr.symbol = '-';
-        break;
-        case '*':
-            result.tt = T_MULTIPLY;
-            result.repr.symbol = '*';
-        break;
-        case '/':
-            result.tt = T_DIVIDE;
-            result.repr.symbol = '/';
-        break;
-        case '=':
-            result.tt = T_EQUAL;
-            result.repr.symbol = '=';
-        break;
-        case '<':
-            result.tt = T_LESSTHAN;
-            result.repr.symbol = '<';
-        break;
-        case '>':
-            result.tt = T_GREATERTHAN;
-            result.repr.symbol = '>';
-        break;
-        default:
-            fprintf(stderr, "TODO: We tried to parse a symbol which isn't in the language yet...\n");
-            exit(1);
-        break;
-    }
-    
-    return result;
-}
 
 int main(int argc, char **argv) {
-    if(argc < 2) {
+       if(argc < 2) {
         fprintf(stderr, "USAGE: kforth [path]\n");
         exit(1);
     }
@@ -361,6 +335,7 @@ int main(int argc, char **argv) {
     }
 
     i32 readBytes = fread(&tempBuffer, 1, st.st_size, inputFile);
+    fclose(inputFile);
     
     if(readBytes < st.st_size) {
         fprintf(stderr, "ERROR: Could not read the whole filestream");
@@ -368,107 +343,14 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    //printf("%s\n", tempBuffer);
+    TokenList list = GenerateTokenList(tempBuffer, st.st_size);
+    Program forthProgram = InitializeProgram();
+    ParseForthProgram(&forthProgram, &list);
 
-    i32 position = 0;
-    Token tempToken[512] = {0};
-    i32 nextFreeToken;
-    while(position < st.st_size) 
-    {
-        //TODO: The lexer needs to recognize symbols that are longer than one symbol
-        //TODO: There are words in forth as well so we need to handle all the letters
-        //TODO: Refactor this process out of the main function
-        //TODO: We could advance position and nextFreeToken at the end of the loop instead of doing in every branch...
-        //TODO: The token list is on the stack right now and has only space for 512 tokens this will probably not suffice
-        //      for a real forth program so we need to make this dynamic sooner or later
-        char currentChar = tempBuffer[position];
-        if(islower(currentChar)) {
-            //TODO: We need to parse a word here...
-            tempToken[nextFreeToken] = ScanWord(tempBuffer, &position, st.st_size);
-            position++;
-            nextFreeToken++;
-            continue;
-        }
-
-        if(isdigit(tempBuffer[position])) {
-            tempToken[nextFreeToken] = ScanValue(tempBuffer, &position, st.st_size);
-            position++;
-            nextFreeToken++;
-            continue;
-        }
-
-        if(ispunct(tempBuffer[position])) {
-            tempToken[nextFreeToken] = ScanOperator(tempBuffer, position);
-            position++;
-            nextFreeToken++;
-            continue;
-        }
-        
-        if(isspace(tempBuffer[position])) {
-            position++;
-        }
-    }
-
-    //Parsing the lexed application into executable forth code
-    Command program[512] = {0};
-    i32 nextFreeInstruction = 0;
-    for(i32 i = 0; i < nextFreeToken; i++) {
-        
-        Token *currentToken = &tempToken[i];
-        switch(currentToken->tt) {
-            case T_VALUE:
-                program[nextFreeInstruction].operation = PUSH;
-                program[nextFreeInstruction].value = atof(currentToken->repr.buffer);
-            break;
-            
-            case T_PLUS:
-                program[nextFreeInstruction].operation = PLUS;
-            break;
-            
-            case T_MINUS:
-                program[nextFreeInstruction].operation = MINUS;
-            break;
-
-            case T_DOT:
-                program[nextFreeInstruction].operation = OUTPUT;
-            break;
-            
-            case T_MULTIPLY:
-                program[nextFreeInstruction].operation = MULTIPLY;
-            break;
-            
-            case T_DIVIDE:
-                program[nextFreeInstruction].operation = DIVIDE;
-            break;
-            
-            case T_LESSTHAN:
-                program[nextFreeInstruction].operation = LESSTHAN;
-            break;
-            
-            case T_GREATERTHAN:
-                program[nextFreeInstruction].operation = GREATERTHAN;
-            break;
-            
-            case T_EQUAL:
-                program[nextFreeInstruction].operation = EQUAL;
-            break;
-            
-            case T_SWAP:
-                program[nextFreeInstruction].operation = SWAP;
-            break;
-
-            case T_DUP:
-                program[nextFreeInstruction].operation = DUP;
-            break;
-        }
-
-        nextFreeInstruction++;
-
-    }
-
-    //Execution of the parsed application...
     Stack stack = {0};
-    for(i32 i = 0; i < nextFreeInstruction; i++) {
-        HandleOperation(&program[i], &stack);
+    for(i32 i = 0; i < forthProgram.size; i++) {
+        HandleOperation(&forthProgram.instructions[i], &stack);
     }
+
+    FreeTokenList(&list);
 }
