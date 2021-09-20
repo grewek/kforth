@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "base_types.h"
 #include "lexer.h"
 #include "token_list.h"
 //#include "token.h"
@@ -17,7 +18,7 @@
 
 //TODO: Seperate into different files for a better overview...
 
-typedef uint64_t u64;
+/*typedef uint64_t u64;
 typedef uint32_t u32;
 typedef uint16_t u16;
 typedef uint8_t u8;
@@ -28,7 +29,7 @@ typedef int16_t i16;
 typedef int8_t i8;
 
 typedef float f32;
-typedef float f64;
+typedef float f64;*/
 
 typedef enum {
     PUSH,
