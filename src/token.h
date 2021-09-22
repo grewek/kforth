@@ -23,9 +23,8 @@ typedef enum {
 typedef struct {
     TokenType tt;
 
-    i32 start;
-    i32 end;
-    i32 length;
+    u64 start;
+    u64 length;
 
     union {
         char *buffer;

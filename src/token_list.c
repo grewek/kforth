@@ -68,16 +68,25 @@ Token PopToken(TokenList *tokenList) {
     }
     
     
-    fprintf(stderr, "ERROR: You drained the tokenstream !\n");
+    fprintf(stderr, "ERROR: Out of tokens !\n");
     exit(1);
 }
 
 
 Token *PeekToken(TokenList *tokenList) {
-    if((tokenList->_head + 1) < tokenList->_elementCount) {
-        return &tokenList->_tokens[(tokenList->_head + 1)];
+    if(tokenList->_head < tokenList->_elementCount) {
+        Token *result = &tokenList->_tokens[tokenList->_head];
+        return result;
     }
     
     fprintf(stderr, "ERROR: Out of tokens to peek into !\n");
     exit(1);
+}
+
+bool TokenStackEmpty(TokenList *tokenList) {
+    if(tokenList->_head >= tokenList->_elementCount) {
+        return true;
+    }
+
+    return false;
 }

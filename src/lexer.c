@@ -43,7 +43,7 @@ char *TokenString(char *buffer, u64 start, u64 length) {
 }
 
 char PeekCharacter(Lexer *lexer) {
-    if(lexer->position < lexer->size) {
+    if(lexer->position <= lexer->size) {
         return lexer->source[lexer->position + 1];
     }
 
@@ -52,7 +52,7 @@ char PeekCharacter(Lexer *lexer) {
 }
 
 void ConsumeCharacter(Lexer *lexer) {
-    if(lexer->position >= lexer->size) {
+    if(lexer->position > lexer->size) {
         fprintf(stderr, "ERROR: Out of Characters to consume !");
         exit(1);
     }
@@ -63,13 +63,13 @@ void ConsumeCharacter(Lexer *lexer) {
 Token ScanValue(Lexer *lexer) {
     Token result = {0};
     result.start = lexer->position;
-    
-    while(lexer->position < (lexer->size - 1) && isdigit(PeekCharacter(lexer))) {
+
+    while(lexer->position < lexer->size && isdigit(PeekCharacter(lexer))) {
         ConsumeCharacter(lexer);
     }
+    ConsumeCharacter(lexer);
 
-    result.end = lexer->position;
-    result.length = ((result.end + 1) - result.start);
+    result.length = lexer->position - result.start;
     result.repr.buffer = TokenString(lexer->source, result.start, result.length);
     result.tt = T_VALUE;
     return result;
@@ -78,22 +78,16 @@ Token ScanValue(Lexer *lexer) {
 Token ScanWord(Lexer *lexer) {
     Token result = {0};
     result.start  = lexer->position;
+    
 
-    while(lexer->position < (lexer->size - 1) && (islower(PeekCharacter(lexer)) || isupper(PeekCharacter(lexer)))) {
+    while(lexer->position < lexer->size && (islower(PeekCharacter(lexer)) || isupper(PeekCharacter(lexer)))) {
         ConsumeCharacter(lexer);
     }
+    ConsumeCharacter(lexer);
 
-    result.end = lexer->position;
-    result.length = ((result.end + 1) - result.start);
+    result.length = lexer->position - result.start;
     result.repr.buffer = TokenString(lexer->source, result.start, result.length);
-
-    if(strcmp(result.repr.buffer, "swap") == 0) {
-        result.tt = T_SWAP;
-    } else if(strcmp(result.repr.buffer, "dup") == 0) {
-        result.tt = T_DUP;
-    } else {
-        result.tt = T_WORD;
-    }
+    result.tt = T_WORD;
     
     return result;
 }
@@ -101,7 +95,6 @@ Token ScanWord(Lexer *lexer) {
 Token ScanOperator(Lexer *lexer) {
     Token result = {0};
     result.start = lexer->position;
-    result.end = lexer->position;
     //TODO: There are symbols with more than one character i.e. comments, we need to handle these as well
     result.length = 1;
     switch(lexer->source[lexer->position]) {
@@ -151,38 +144,44 @@ Token ScanOperator(Lexer *lexer) {
         break;
     }
     
+    ConsumeCharacter(lexer);
     return result;
 }
 
+
+void WordToKeyword(Token *token) {
+    if(strcmp(token->repr.buffer, "swap") == 0) {
+        token->tt = T_SWAP;
+    } else if(strcmp(token->repr.buffer, "dup") == 0) {
+        token->tt = T_DUP;
+    }
+}
 
 TokenList GenerateTokenList(const char *sourcePath)
 {
     Lexer lexer = InitializeLexer(sourcePath);
     TokenList tokens = InitializeTokenList();
+
     while(lexer.position < lexer.size)
     {
+        Token currentToken;
         char currentChar = lexer.source[lexer.position];
         if(islower(currentChar)) {
-            PushToken(&tokens, ScanWord(&lexer));
+            currentToken = ScanWord(&lexer);
+            WordToKeyword(&currentToken);
+        }
+        else if(isdigit(currentChar)) {
+            currentToken = ScanValue(&lexer);
+        }
+        else if(ispunct(currentChar)) {
+            currentToken = ScanOperator(&lexer);
+        }
+        else if(isspace(currentChar)) {
             ConsumeCharacter(&lexer);
             continue;
         }
 
-        if(isdigit(currentChar)) {
-            PushToken(&tokens, ScanValue(&lexer));
-            ConsumeCharacter(&lexer);
-            continue;
-        }
-
-        if(ispunct(currentChar)) {
-            PushToken(&tokens, ScanOperator(&lexer));
-            ConsumeCharacter(&lexer);
-            continue;
-        }
-        
-        if(isspace(currentChar)) {
-            ConsumeCharacter(&lexer);
-        }
+        PushToken(&tokens, currentToken);
     }
 
     //NOTE: We free the source buffer here...

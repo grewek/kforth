@@ -1,6 +1,7 @@
 #ifndef _TOKEN_LIST_H_
 #define _TOKEN_LIST_H_
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -29,5 +30,6 @@ void PushToken(TokenList *tokenList, Token token);
 
 Token PopToken(TokenList *tokenList);
 Token *PeekToken(TokenList *tokenList);
+bool TokenStackEmpty(TokenList *tokenList);
 
 #endif
