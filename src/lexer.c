@@ -94,6 +94,29 @@ Token ScanWord(Lexer *lexer) {
     return result;
 }
 
+void ConsumeComment(Lexer *lexer) {
+    while(lexer->position < lexer->size && lexer->source[lexer->position] != ')') {
+        ConsumeCharacter(lexer);
+    }
+    ConsumeCharacter(lexer);
+}
+
+Token ScanString(Lexer *lexer) {
+    Token result = {0};
+    result.start = lexer->position;
+
+    while(lexer->position < lexer->size && lexer->source[lexer->position] != '"') {
+        ConsumeCharacter(lexer);
+    }
+    ConsumeCharacter(lexer);
+
+    result.length = lexer->position - result.start;
+    result.repr.buffer = TokenString(lexer->source, result.start, result.length);
+    result.tt = T_STRING;
+
+    return result;
+}
+
 Token ScanOperator(Lexer *lexer) {
     Token result = {0};
     result.start = lexer->position;
@@ -175,8 +198,18 @@ TokenList GenerateTokenList(const char *sourcePath)
         else if(isdigit(currentChar)) {
             currentToken = ScanValue(&lexer);
         }
+        else if(currentChar == '(') {
+            ConsumeComment(&lexer);
+            continue;
+        }
         else if(ispunct(currentChar)) {
-            currentToken = ScanOperator(&lexer);
+            if(currentChar == '.' && PeekCharacter(&lexer) == '"') {
+                ConsumeCharacter(&lexer); // '.'
+                ConsumeCharacter(&lexer); // '"'
+                currentToken = ScanString(&lexer);
+            } else {
+                currentToken = ScanOperator(&lexer);
+            }
         }
         else if(isspace(currentChar)) {
             ConsumeCharacter(&lexer);
