@@ -23,9 +23,13 @@ void FreeTokenList(TokenList *tokenList) {
     for(u64 i = 0; i < tokenList->_elementCount; i++) {
         Token *currentToken = &tokenList->_tokens[i];
 
+        //NOTE: We need a better way to handle freeing keywords or we have to manually add a case for
+        //      every keyword which doesn't sound fun.
         switch(currentToken->tt) {
             case T_WORD:
             case T_VALUE:
+            case T_SWAP:
+            case T_DUP:
                 free(currentToken->repr.buffer);
                 currentToken->repr.buffer = NULL;
             break;

@@ -1,23 +1,6 @@
 #include "forth_intrinsics.h"
 
-void Push(Stack *stack, f32 value) {
-    stack->values[stack->stackPtr] = value;
-    stack->stackPtr++;
-}
 
-f32 Pop(Stack *stack) {
-    
-    if(stack->stackPtr > 0) {
-        stack->stackPtr--;
-    } else {
-        fprintf(stderr, "ERROR: Stack underflow\n");
-        exit(1); //TODO: Think of a way of catching the error and handling it gracefully ?
-    }
-
-    f32 result = stack->values[stack->stackPtr];
-
-    return result;
-}
 
 f32 Plus(f32 a, f32 b) {
     return a + b;

@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include <assert.h>
 #include <stdbool.h>
 #include <ctype.h>
 
@@ -8,15 +9,20 @@
 #include "lexer.h"
 #include "token_list.h"
 
+#include "forth_stack.h"
 #include "forth_function.h"
 #include "forth_intrinsics.h"
-#include "forth_stack.h"
+#include "forth_evaluator.h"
+
 
 void ParseForthProgram(ForthFunction *prog, HashMap *functions, TokenList *tokenList) {
 
     while(!TokenStackEmpty(tokenList)) {
         
         Token currentToken = PopToken(tokenList);
+
+        assert(prog->count < prog->size);
+        
         switch(currentToken.tt) {
             case T_VALUE:
                 prog->instructions[prog->count].operation = PUSH;
@@ -90,22 +96,6 @@ void ParseForthProgram(ForthFunction *prog, HashMap *functions, TokenList *token
     }
 }
 
-void EvaluateFunction(ForthFunction *func, HashMap *map, Stack *stack) {
-    for(u64 i = 0; i < func->count; i++) {
-        //NOTE: If the user tries to call a function that he defined HandleOperation will give a pointer to the name
-        //      structure back so we can search the function inside the function dictionary...
-        struct Name *fname = HandleOperation(&func->instructions[i], stack);
-
-        if(fname != NULL) {
-            char *key = fname->name;
-            u64 size = fname->size;
-
-            ForthFunction *func = GetValue(map, key, size);
-            EvaluateFunction(func, map, stack);
-        }
-    }
-}
-
 int main(int argc, char **argv) {
     if(argc < 2) {
         fprintf(stderr, "USAGE: kforth [path]\n");
@@ -123,7 +113,8 @@ int main(int argc, char **argv) {
 
     //Clean evertyhing up so that valgrind doesn't complain for now...
     //TODO: Handle clean up in a case where there is a error we can't recover from !
-    EvaluateFunction(&main, &map, &stack);
+    RunFunction(&main, &map, &stack);
+    //EvaluateFunction(&main, &map, &stack);
     FreeHashMap(&map);
     FreeFunction(&main);
     FreeTokenList(&list);

@@ -7,11 +7,6 @@
 #include "forth_stack.h"
 #include "base_types.h"
 
-//TODO: Define all functions that forth provides to the user here.
-//Stack Operations
-void Push(Stack *stack, f32 value);
-f32 Pop(Stack *stack);
-
 //Arithmetic Operations
 f32 Plus(f32 a, f32 b);
 f32 Minus(f32 a, f32 b);

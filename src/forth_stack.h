@@ -5,7 +5,10 @@
 
 #include <stdbool.h>
 
-#include "forth_function.h"
+#include "forth_instruction.h"
+#include "forth_intrinsics.h"
+#include "forth_stack.h"
+
 #include "token.h"
 #include "base_types.h"
 typedef struct {
@@ -15,15 +18,18 @@ typedef struct {
     unsigned int stackPtr;
 } Stack;
 
+void Push(Stack *stack, f32 value);
+f32 Pop(Stack *stack);
+
 //TODO: Should these function pointers be in the intrinsics file or in the stack file ?
 typedef f32 (*UnaryOpRef)(f32 *); 
 typedef f32 (*BinaryOp)(f32, f32);
 typedef void (*BinaryRefOp)(f32 *, f32 *);
 
+struct Name *HandleOperation(Instruction *cmd, Stack *stack);
 
 void UnaryReferenceOperation(Stack *stack, UnaryOpRef op);
 void BinaryOperation(Stack *stack, BinaryOp op, bool reverse);
 void BinaryReferenceOperation(Stack *stack, BinaryRefOp op);
-struct Name *HandleOperation(Instruction *cmd, Stack *stack);
 
 #endif

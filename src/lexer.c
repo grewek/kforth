@@ -79,9 +79,11 @@ Token ScanWord(Lexer *lexer) {
     Token result = {0};
     result.start  = lexer->position;
     
-
-    while(lexer->position < lexer->size && (islower(PeekCharacter(lexer)) || isupper(PeekCharacter(lexer)))) {
+    char nextCharacter = PeekCharacter(lexer);
+    
+    while(lexer->position < lexer->size && (islower(nextCharacter) || isupper(nextCharacter))) {
         ConsumeCharacter(lexer);
+        nextCharacter = PeekCharacter(lexer);
     }
     ConsumeCharacter(lexer);
 

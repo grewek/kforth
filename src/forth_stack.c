@@ -1,5 +1,23 @@
 #include "forth_stack.h"
-#include "forth_intrinsics.h"
+
+void Push(Stack *stack, f32 value) {
+    stack->values[stack->stackPtr] = value;
+    stack->stackPtr++;
+}
+
+f32 Pop(Stack *stack) {
+    
+    if(stack->stackPtr > 0) {
+        stack->stackPtr--;
+    } else {
+        fprintf(stderr, "ERROR: Stack underflow\n");
+        exit(1); //TODO: Think of a way of catching the error and handling it gracefully ?
+    }
+
+    f32 result = stack->values[stack->stackPtr];
+
+    return result;
+}
 
 void UnaryReferenceOperation(Stack *stack, UnaryOpRef op) {
     f32 *a = &stack->values[stack->stackPtr - 1];
@@ -10,8 +28,8 @@ void UnaryReferenceOperation(Stack *stack, UnaryOpRef op) {
 }
 
 void BinaryOperation(Stack *stack, BinaryOp op, bool reverse) {
-    f32 a = Pop(stack);
     f32 b = Pop(stack);
+    f32 a = Pop(stack);
 
     f32 result;
     if(reverse) {
