@@ -30,6 +30,7 @@ void FreeTokenList(TokenList *tokenList) {
             case T_VALUE:
             case T_SWAP:
             case T_DUP:
+            case T_STRING:
                 free(currentToken->repr.buffer);
                 currentToken->repr.buffer = NULL;
             break;

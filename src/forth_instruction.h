@@ -1,6 +1,7 @@
 #ifndef _FORTH_INSTRUCTION_H_
 #define _FORTH_INSTRUCTION_H_
 
+#include "forth_cell.h"
 #include "base_types.h"
 
 typedef enum Operation {
@@ -18,20 +19,12 @@ typedef enum Operation {
     DUP,
     SUBROUTINE,
     WORD,
+    DEF_STRING,
 } Operation;
 
 typedef struct Instruction {
     Operation operation;
-    
-    union {
-        f32 value;
-        
-        struct Name {
-            u64 size;
-            char *name;
-        } name;
-
-    } valueType;
+    ForthCell value;
     
 } Instruction;
 

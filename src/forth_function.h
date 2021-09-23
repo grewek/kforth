@@ -16,6 +16,5 @@ typedef struct ForthFunction {
 
 ForthFunction InitializeFunction(u64 size);
 
-
 void FreeFunction(ForthFunction *function);
 #endif

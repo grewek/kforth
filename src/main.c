@@ -14,7 +14,6 @@
 #include "forth_intrinsics.h"
 #include "forth_evaluator.h"
 
-
 void ParseForthProgram(ForthFunction *prog, HashMap *functions, TokenList *tokenList) {
 
     while(!TokenStackEmpty(tokenList)) {
@@ -26,47 +25,58 @@ void ParseForthProgram(ForthFunction *prog, HashMap *functions, TokenList *token
         switch(currentToken.tt) {
             case T_VALUE:
                 prog->instructions[prog->count].operation = PUSH;
-                prog->instructions[prog->count].valueType.value = atof(currentToken.repr.buffer);
+                prog->instructions[prog->count].value.ct = CELL_INT;
+                prog->instructions[prog->count].value.innerType.integer = atoi(currentToken.repr.buffer);
             break;
             
             case T_PLUS:
                 prog->instructions[prog->count].operation = PLUS;
+                prog->instructions[prog->count].value.ct = CELL_VOID;
             break;
             
             case T_MINUS:
                 prog->instructions[prog->count].operation = MINUS;
+                prog->instructions[prog->count].value.ct = CELL_VOID;
             break;
 
             case T_DOT:
                 prog->instructions[prog->count].operation = OUTPUT;
+                prog->instructions[prog->count].value.ct = CELL_VOID;
             break;
             
             case T_MULTIPLY:
                 prog->instructions[prog->count].operation = MULTIPLY;
+                prog->instructions[prog->count].value.ct = CELL_VOID;
             break;
             
             case T_DIVIDE:
                 prog->instructions[prog->count].operation = DIVIDE;
+                prog->instructions[prog->count].value.ct = CELL_VOID;
             break;
             
             case T_LESSTHAN:
                 prog->instructions[prog->count].operation = LESSTHAN;
+                prog->instructions[prog->count].value.ct = CELL_VOID;
             break;
             
             case T_GREATERTHAN:
                 prog->instructions[prog->count].operation = GREATERTHAN;
+                prog->instructions[prog->count].value.ct = CELL_VOID;
             break;
             
             case T_EQUAL:
                 prog->instructions[prog->count].operation = EQUAL;
+                prog->instructions[prog->count].value.ct = CELL_VOID;
             break;
             
             case T_SWAP:
                 prog->instructions[prog->count].operation = SWAP;
+                prog->instructions[prog->count].value.ct = CELL_VOID;
             break;
 
             case T_DUP:
                 prog->instructions[prog->count].operation = DUP;
+                prog->instructions[prog->count].value.ct = CELL_VOID;
             break;
 
             case T_COLON:
@@ -85,10 +95,17 @@ void ParseForthProgram(ForthFunction *prog, HashMap *functions, TokenList *token
                 return;
             break;
 
+            case T_STRING:
+                prog->instructions[prog->count].operation = DEF_STRING;
+                prog->instructions[prog->count].value.ct = CELL_STRING;
+                prog->instructions[prog->count].value.innerType.string.buffer = currentToken.repr.buffer;
+                prog->instructions[prog->count].value.innerType.string.size = currentToken.length;
+            break;
             case T_WORD:
                 prog->instructions[prog->count].operation = WORD;
-                prog->instructions[prog->count].valueType.name.name = currentToken.repr.buffer;
-                prog->instructions[prog->count].valueType.name.size = currentToken.length;
+                prog->instructions[prog->count].value.ct = CELL_STRING;
+                prog->instructions[prog->count].value.innerType.string.buffer = currentToken.repr.buffer;
+                prog->instructions[prog->count].value.innerType.string.size = currentToken.length;
                 break;
         }
 

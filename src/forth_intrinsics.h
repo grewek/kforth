@@ -4,22 +4,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "forth_cell.h"
 #include "forth_stack.h"
 #include "base_types.h"
 
 //Arithmetic Operations
-f32 Plus(f32 a, f32 b);
-f32 Minus(f32 a, f32 b);
-f32 Multiply(f32 a, f32 b);
-f32 Divide(f32 a, f32 b);
+ForthCell Plus(ForthCell a, ForthCell b);
+ForthCell Minus(ForthCell a, ForthCell b);
+ForthCell Multiply(ForthCell a, ForthCell b);
+ForthCell Divide(ForthCell a, ForthCell b);
 
 //Logic Operations
-f32 Equal(f32 a, f32 b);
-f32 LessThan(f32 a, f32 b);
-f32 GreaterThan(f32 a, f32 b);
+ForthCell Equal(ForthCell a, ForthCell b);
+ForthCell LessThan(ForthCell a, ForthCell b);
+ForthCell GreaterThan(ForthCell a, ForthCell b);
 
 //Reference Based Stack Operations
-f32 DuplicateValue(f32 *a);
-void SwapValues(f32 *a, f32 *b);
+ForthCell DuplicateValue(ForthCell *a);
+void SwapValues(ForthCell *a, ForthCell *b);
 
 #endif
