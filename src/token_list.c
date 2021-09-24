@@ -34,7 +34,7 @@ void FreeTokenList(TokenList *tokenList) {
                 free(currentToken->repr.buffer);
                 currentToken->repr.buffer = NULL;
             break;
-            //The default case has no memory stored internally and can just be freed...
+            //The default case has no memory stored internally and can just be ignored.
             default: break;
         }
     }
@@ -42,6 +42,7 @@ void FreeTokenList(TokenList *tokenList) {
 }
 
 void _ResizeTokenList(TokenList *tokenList) {
+    //TODO: Make sure that we actually have a valid list here !
     tokenList->_pageCount *= 2;
     tokenList->_maxElementCount = (tokenList->_pageSize * tokenList->_pageCount) / sizeof(Token);
     
@@ -58,9 +59,7 @@ void PushToken(TokenList *tokenList, Token token) {
     if(tokenList->_elementCount >= tokenList->_maxElementCount) {
         _ResizeTokenList(tokenList);
     }
-    //TODO: Find out what works better assignment or memcpy ?
-    //Token *tokenSlot = tokenList->tokens + tokenList->size;
-    //memcpy(tokenSlot, &token, sizeof(Token));
+
     tokenList->_tokens[tokenList->_elementCount] = token;
     tokenList->_elementCount += 1;
 }
