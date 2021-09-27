@@ -19,6 +19,12 @@ ForthCell Pop(Stack *stack) {
     return result;
 }
 
+void UnaryReferenceOperationVoid(Stack *stack, UnaryOpVoid op) {
+    ForthCell a = Pop(stack);
+
+    op(a);
+}
+
 void UnaryReferenceOperation(Stack *stack, UnaryOpRef op) {
     ForthCell *a = &stack->values[stack->stackPtr - 1];
 
@@ -49,25 +55,8 @@ void BinaryReferenceOperation(Stack *stack, BinaryRefOp op) {
     op(refA, refB);
 }
 
-void Output(Stack *stack) {
-    ForthCell a = Pop(stack);
-
-    switch(a.ct) {
-        case CELL_INT:
-            printf("%d ok\n", a.innerType.integer);
-        break;
-        case CELL_STRING:
-            printf("%s ok\n", a.innerType.string.buffer);
-        break;
-        default:
-        break;
-    }
-    
-}
-
-
 ForthCell *HandleOperation(Instruction *cmd, Stack *stack) {
-    switch(cmd->operation) {
+   switch(cmd->operation) {
         case PUSH:
         Push(stack, cmd->value);
         break;
@@ -105,11 +94,11 @@ ForthCell *HandleOperation(Instruction *cmd, Stack *stack) {
         break;
 
         case SWAP:
-        BinaryReferenceOperation(stack, SwapValues);
+        BinaryReferenceOperation(stack, Swap);
         break;
 
         case OUTPUT:
-        Output(stack);
+        UnaryReferenceOperationVoid(stack, Output);
         break;
 
         case SUBROUTINE:
@@ -121,11 +110,11 @@ ForthCell *HandleOperation(Instruction *cmd, Stack *stack) {
         break;
 
         case DUP:
-        UnaryReferenceOperation(stack, DuplicateValue);
+        UnaryReferenceOperation(stack, Duplicate);
         break;
 
         case DEF_STRING:
-        printf("Ok now what...?!");
+        Push(stack, cmd->value);
         break;
     }
 

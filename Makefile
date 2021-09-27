@@ -6,10 +6,16 @@ EXEC = bin/kforth
 hash_map.o: $(SRC)hash_map.c
 	cc -c $(CFLAGS) $< -o $(OBJDEST)$@
 
+forth_cell.o: $(SRC)forth_cell.c
+	cc -c $(CFLAGS) $< -o $(OBJDEST)$@
+
 forth_function.o: $(SRC)forth_function.c
 	cc -c $(CFLAGS) $< -o $(OBJDEST)$@
 
-forth_intrinsics.o: $(SRC)forth_intrinsics.c
+integer_operations.o: $(SRC)integer_operations.c
+	cc -c $(CFLAGS) $< -o $(OBJDEST)$@
+
+stack_operations.o: $(SRC)stack_operations.c
 	cc -c $(CFLAGS) $< -o $(OBJDEST)$@
 
 forth_stack.o: $(SRC)forth_stack.c
@@ -27,8 +33,8 @@ lexer.o: $(SRC)lexer.c
 main.o: $(SRC)main.c
 	cc -c $(CFLAGS) $< -o $(OBJDEST)$@
 
-kforth: main.o lexer.o forth_function.o forth_intrinsics.o forth_stack.o forth_evaluator.o token_list.o hash_map.o
-	cc objs/main.o objs/lexer.o objs/forth_function.o objs/forth_intrinsics.o objs/forth_stack.o objs/forth_evaluator.o objs/token_list.o objs/hash_map.o -o bin/kforth
+kforth: main.o lexer.o forth_function.o stack_operations.o integer_operations.o forth_stack.o forth_evaluator.o forth_cell.o token_list.o hash_map.o
+	cc objs/main.o objs/lexer.o objs/forth_function.o objs/stack_operations.o objs/integer_operations.o objs/forth_stack.o objs/forth_evaluator.o objs/forth_cell.o objs/token_list.o objs/hash_map.o -o bin/kforth
 
 clean:
 	rm bin/*

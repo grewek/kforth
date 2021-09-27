@@ -108,9 +108,9 @@ Token ScanString(Lexer *lexer) {
     while(lexer->position < lexer->size && lexer->source[lexer->position] != '"') {
         ConsumeCharacter(lexer);
     }
-    ConsumeCharacter(lexer);
 
     result.length = lexer->position - result.start;
+    ConsumeCharacter(lexer);
     result.repr.buffer = TokenString(lexer->source, result.start, result.length);
     result.tt = T_STRING;
 

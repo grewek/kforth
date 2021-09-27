@@ -11,7 +11,6 @@
 
 #include "forth_stack.h"
 #include "forth_function.h"
-#include "forth_intrinsics.h"
 #include "forth_evaluator.h"
 
 void ParseForthProgram(ForthFunction *prog, HashMap *functions, TokenList *tokenList) {

@@ -1,12 +1,16 @@
 #ifndef _FORTH_CELL_H_
 #define _FORTH_CELL_H_
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "base_types.h"
+#include "integer_operations.h"
 
 typedef enum CellType {
+    CELL_VOID,
     CELL_INT,
     CELL_STRING,
-    CELL_VOID,
 } CellType;
 
 typedef struct ForthString {
@@ -23,4 +27,14 @@ typedef struct ForthCell {
     } innerType;
 } ForthCell;
 
+ForthCell ValueIntoCell(void *value, CellType ct);
+
+ForthCell Plus(ForthCell a, ForthCell b);
+ForthCell Minus(ForthCell a, ForthCell b);
+ForthCell Multiply(ForthCell a, ForthCell b);
+ForthCell Divide(ForthCell a, ForthCell b);
+
+ForthCell Equal(ForthCell a, ForthCell b);
+ForthCell LessThan(ForthCell a, ForthCell b);
+ForthCell GreaterThan(ForthCell a, ForthCell b);
 #endif
