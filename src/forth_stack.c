@@ -55,6 +55,14 @@ void BinaryReferenceOperation(Stack *stack, BinaryRefOp op) {
     op(refA, refB);
 }
 
+void TernaryReferenceOperation(Stack *stack, TernaryRefOp op) {
+    ForthCell *refA = &stack->values[stack->stackPtr - 1];
+    ForthCell *refB = &stack->values[stack->stackPtr - 2];
+    ForthCell *refC = &stack->values[stack->stackPtr - 3];
+
+    op(refA, refB, refC);
+}
+
 ForthCell *HandleOperation(Instruction *cmd, Stack *stack) {
    switch(cmd->operation) {
         case PUSH:
@@ -91,6 +99,10 @@ ForthCell *HandleOperation(Instruction *cmd, Stack *stack) {
 
         case LESSTHAN:
         BinaryOperation(stack, LessThan, true);
+        break;
+
+        case ROTATE:
+        TernaryReferenceOperation(stack, Rotate);
         break;
 
         case SWAP:

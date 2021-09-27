@@ -20,6 +20,7 @@ typedef enum Operation {
     SUBROUTINE,
     WORD,
     DEF_STRING,
+    ROTATE,
 } Operation;
 
 typedef struct Instruction {

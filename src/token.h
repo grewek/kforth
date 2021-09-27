@@ -19,6 +19,7 @@ typedef enum {
     T_SEMICOLON,
     T_WORD,
     T_STRING,
+    T_ROTATE,
 } TokenType;
 
 typedef struct {

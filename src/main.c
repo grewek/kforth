@@ -68,6 +68,11 @@ void ParseForthProgram(ForthFunction *prog, HashMap *functions, TokenList *token
                 prog->instructions[prog->count].value.ct = CELL_VOID;
             break;
             
+            case T_ROTATE:
+                prog->instructions[prog->count].operation = ROTATE;
+                prog->instructions[prog->count].value.ct = CELL_VOID;
+            break;
+            
             case T_SWAP:
                 prog->instructions[prog->count].operation = SWAP;
                 prog->instructions[prog->count].value.ct = CELL_VOID;
