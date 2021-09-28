@@ -37,4 +37,6 @@ ForthCell Divide(ForthCell a, ForthCell b);
 ForthCell Equal(ForthCell a, ForthCell b);
 ForthCell LessThan(ForthCell a, ForthCell b);
 ForthCell GreaterThan(ForthCell a, ForthCell b);
+
+const char *CellTypeToString(CellType type);
 #endif

@@ -1,19 +1,26 @@
 #include "lexer.h"
 
+void ReportError(Lexer *lexer, const char *errorMessage) {
+    fprintf(stderr, "(%s:%ld:%ld) Error: %s\n", lexer->fileName, lexer->line, lexer->linePosition, errorMessage);
+    exit(EXIT_FAILURE);
+}
+
+
 Lexer InitializeLexer(const char *sourceFilePath) {
     Lexer result = {0};
-
+    result.line = 1; //NOTE: We start at line one not at line zero in the source file.
     struct stat st;
     stat(sourceFilePath, &st);
 
     FILE *source = fopen(sourceFilePath, "r");
     result.size = st.st_size;
+    result.fileName = sourceFilePath;
     result.source = calloc(st.st_size, sizeof(char));
 
     if(result.source == NULL) {
         fprintf(stderr, "ERROR: Could not allocate memory for the source file !");
         fclose(source);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     u64 readBytes = fread(result.source, 1, result.size, source);
@@ -23,7 +30,7 @@ Lexer InitializeLexer(const char *sourceFilePath) {
         fprintf(stderr, "ERROR: Could not read the whole filestream");
         free(result.source);
         fclose(source);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     return result;
@@ -34,7 +41,7 @@ char *TokenString(char *buffer, u64 start, u64 length) {
 
     if(result == NULL) {
         fprintf(stderr, "ERROR: Could not allocate memory for Token String\n");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     char *startOfToken = buffer + start;
     memcpy(result, startOfToken, length);
@@ -43,33 +50,58 @@ char *TokenString(char *buffer, u64 start, u64 length) {
 }
 
 char PeekCharacter(Lexer *lexer) {
-    if(lexer->position <= lexer->size) {
-        return lexer->source[lexer->position + 1];
+    if(lexer->rawPosition >= lexer->size) {
+        fprintf(stderr, "ERROR: Tried to peek behind the buffer !");
+        exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "ERROR: Tried to peak behind the buffer !");
-    exit(1);
+    return lexer->source[lexer->rawPosition];
+    
 }
 
-void ConsumeCharacter(Lexer *lexer) {
-    if(lexer->position > lexer->size) {
+char ConsumeCharacter(Lexer *lexer) {
+    if(lexer->rawPosition > lexer->size) {
         fprintf(stderr, "ERROR: Out of Characters to consume !");
         exit(1);
     }
 
-    lexer->position += 1;
+    char result = lexer->source[lexer->rawPosition];
+    lexer->rawPosition += 1;
+    lexer->linePosition += 1;
+
+    return result;
+}
+
+bool MatchAndConsume(Lexer *lexer, char symbol) {
+    if(lexer->rawPosition < lexer->size && PeekCharacter(lexer) == symbol) {
+        ConsumeCharacter(lexer);
+        return true;
+    }
+
+    return false;
 }
 
 Token ScanValue(Lexer *lexer) {
     Token result = {0};
-    result.start = lexer->position;
+    result.start = lexer->rawPosition;
 
-    while(lexer->position < lexer->size && isdigit(PeekCharacter(lexer))) {
-        ConsumeCharacter(lexer);
+    while(lexer->rawPosition < lexer->size) {
+        //NOTE: When we hit a space character we found the end of the value literal.
+        
+        if(isspace(PeekCharacter(lexer))) {
+            break;
+        }
+
+        if(isdigit(PeekCharacter(lexer))) {
+            ConsumeCharacter(lexer);
+        } else {
+            const char *errMessage = "Unknown Symbol in Value literal.";
+            ReportError(lexer, errMessage);
+        }
     }
-    ConsumeCharacter(lexer);
+    
 
-    result.length = lexer->position - result.start;
+    result.length = lexer->rawPosition - result.start;
     result.repr.buffer = TokenString(lexer->source, result.start, result.length);
     result.tt = T_VALUE;
     return result;
@@ -77,17 +109,26 @@ Token ScanValue(Lexer *lexer) {
 
 Token ScanWord(Lexer *lexer) {
     Token result = {0};
-    result.start  = lexer->position;
+    result.start  = lexer->rawPosition;
     
-    char nextCharacter = PeekCharacter(lexer);
-    
-    while(lexer->position < lexer->size && (islower(nextCharacter) || isupper(nextCharacter))) {
-        ConsumeCharacter(lexer);
-        nextCharacter = PeekCharacter(lexer);
-    }
     ConsumeCharacter(lexer);
+    
+    while(lexer->rawPosition < lexer->size) {
+        char nextCharacter = PeekCharacter(lexer);
 
-    result.length = lexer->position - result.start;
+        if (isspace(nextCharacter)) {
+            break;
+        }
+
+        if (islower(nextCharacter) || isupper(nextCharacter)) {
+            ConsumeCharacter(lexer);
+        } else {
+            const char *errMessage = "Illegal symbol in word literal. A word can only contain lower and uppercase letters.";
+            ReportError(lexer, errMessage);
+        }
+    }
+
+    result.length = lexer->rawPosition - result.start;
     result.repr.buffer = TokenString(lexer->source, result.start, result.length);
     result.tt = T_WORD;
     
@@ -95,22 +136,37 @@ Token ScanWord(Lexer *lexer) {
 }
 
 void ConsumeComment(Lexer *lexer) {
-    while(lexer->position < lexer->size && lexer->source[lexer->position] != ')') {
+    while(lexer->rawPosition < lexer->size) {
+        if(PeekCharacter(lexer) == ')') {
+            ConsumeCharacter(lexer);
+            break;
+        }
+
         ConsumeCharacter(lexer);
     }
-    ConsumeCharacter(lexer);
 }
 
 Token ScanString(Lexer *lexer) {
     Token result = {0};
-    result.start = lexer->position;
+    result.start = lexer->rawPosition;
 
-    while(lexer->position < lexer->size && lexer->source[lexer->position] != '"') {
+    while(lexer->rawPosition < lexer->size) {
+        if(PeekCharacter(lexer) == '"') {
+            break;
+        }
+        
         ConsumeCharacter(lexer);
     }
 
-    result.length = lexer->position - result.start;
+    if(lexer->rawPosition == lexer->size) {
+        const char *errMessage = 
+            "String literal has no end. You need to put a double quote character (\") at the end of your String literal.";
+        ReportError(lexer, errMessage);
+    }
+
     ConsumeCharacter(lexer);
+    
+    result.length = (lexer->rawPosition - 1) - result.start;
     result.repr.buffer = TokenString(lexer->source, result.start, result.length);
     result.tt = T_STRING;
 
@@ -119,10 +175,10 @@ Token ScanString(Lexer *lexer) {
 
 Token ScanOperator(Lexer *lexer) {
     Token result = {0};
-    result.start = lexer->position;
+    result.start = lexer->rawPosition;
     //TODO: There are symbols with more than one character i.e. comments, we need to handle these as well
     result.length = 1;
-    switch(lexer->source[lexer->position]) {
+    switch(lexer->source[lexer->rawPosition]) {
         case ':':
             result.tt = T_COLON;
             result.repr.symbol = ':';
@@ -132,8 +188,13 @@ Token ScanOperator(Lexer *lexer) {
             result.repr.symbol = ';';
         break;
         case '.':
-            result.tt = T_DOT;
-            result.repr.symbol = '.';
+            ConsumeCharacter(lexer);
+            if(MatchAndConsume(lexer, '"')) {
+                result = ScanString(lexer);
+            } else {
+                result.tt = T_DOT;
+                result.repr.symbol = '.';
+            }
         break;
         case '+':
             result.tt = T_PLUS;
@@ -163,9 +224,10 @@ Token ScanOperator(Lexer *lexer) {
             result.tt = T_GREATERTHAN;
             result.repr.symbol = '>';
         break;
-        default:
-            fprintf(stderr, "TODO: We tried to parse a symbol which isn't in the language yet...\n");
-            exit(1);
+        default: {
+            const char *errMessage = "Tried to parse a symbol that is not part of the language.\n";
+            ReportError(lexer, errMessage);
+        }
         break;
     }
     
@@ -189,10 +251,16 @@ TokenList GenerateTokenList(const char *sourcePath)
     Lexer lexer = InitializeLexer(sourcePath);
     TokenList tokens = InitializeTokenList();
 
-    while(lexer.position < lexer.size)
+    while(lexer.rawPosition < lexer.size)
     {
         Token currentToken;
-        char currentChar = lexer.source[lexer.position];
+        char currentChar = PeekCharacter(&lexer);
+
+        if(currentChar == '\n') {
+            lexer.line += 1;
+            lexer.linePosition = 0;
+        }
+
         if(islower(currentChar)) {
             currentToken = ScanWord(&lexer);
             WordToKeyword(&currentToken);
@@ -205,13 +273,13 @@ TokenList GenerateTokenList(const char *sourcePath)
             continue;
         }
         else if(ispunct(currentChar)) {
-            if(currentChar == '.' && PeekCharacter(&lexer) == '"') {
+            /*if(currentChar == '.' && PeekCharacter(&lexer) == '"') {
                 ConsumeCharacter(&lexer); // '.'
                 ConsumeCharacter(&lexer); // '"'
                 currentToken = ScanString(&lexer);
-            } else {
+            } else {*/
                 currentToken = ScanOperator(&lexer);
-            }
+            //}
         }
         else if(isspace(currentChar)) {
             ConsumeCharacter(&lexer);

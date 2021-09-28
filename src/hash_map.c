@@ -13,7 +13,7 @@ HashMap InitializeHashMap() {
     return result;
 }
 
-ForthFunction *EmptyFunctionWithKey(HashMap *map, char *key, u64 size) {
+ForthFunction *EmptyFunctionWithKey(HashMap *map, char *key, u64 size) {    
     u64 index = _GenerateHashValue(key, size) % map->size;
     ForthFunction emptyFunction = InitializeFunction(128);
     memcpy(map->_functions + index, &emptyFunction, sizeof(ForthFunction));

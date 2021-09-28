@@ -11,7 +11,7 @@ ForthCell ValueIntoCell(void *value, CellType ct) {
             result.innerType.string = *(ForthString *)value;
         break;
         default:
-            fprintf(stderr, "ERROR: Cannot convert into cell type.\n");
+            fprintf(stderr, "ERROR: Cannot convert into cell of type %s.\n", CellTypeToString(ct));
             exit(1);
         break;
     }
@@ -32,7 +32,7 @@ ForthCell Plus(ForthCell a, ForthCell b) {
             return ValueIntoCell((void *)&value, CELL_INT);
         } break;
         default:
-            fprintf(stderr, "TODO: Make it possible to add these types !");
+            fprintf(stderr, "TODO: Impossible to add cells of type %s.\n", CellTypeToString(a.ct));
             exit(1);
         break;
     }
@@ -50,7 +50,7 @@ ForthCell Minus(ForthCell a, ForthCell b) {
             return ValueIntoCell((void *)&value, CELL_INT);
         } break;
         default:
-            fprintf(stderr, "TODO: Make it possible to add these types !");
+            fprintf(stderr, "TODO: Impossible to subtract cells of type %s.\n", CellTypeToString(a.ct));
             exit(1);
         break;
     }
@@ -68,6 +68,7 @@ ForthCell Multiply(ForthCell a, ForthCell b) {
             return ValueIntoCell((void *)&value, CELL_INT);
         } break;
         default:
+            fprintf(stderr, "TODO: Impossible to multiply cells of type %s.\n", CellTypeToString(a.ct));
             exit(1);
         break;
     }
@@ -85,6 +86,7 @@ ForthCell Divide(ForthCell a, ForthCell b) {
             return ValueIntoCell((void *)&value, CELL_INT);
         } break;
         default:
+            fprintf(stderr, "TODO: Impossible to divide cells of type %s.\n", CellTypeToString(a.ct));
             exit(1);
         break;
     }
@@ -103,6 +105,7 @@ ForthCell Equal(ForthCell a, ForthCell b) {
             return ValueIntoCell((void *)&value, CELL_INT);
         } break;
         default:
+            fprintf(stderr, "Impossible to compare cells of type %s for equality.\n", CellTypeToString(a.ct));
             exit(1);
         break;
     }
@@ -121,6 +124,7 @@ ForthCell LessThan(ForthCell a, ForthCell b) {
             return ValueIntoCell((void *)&value, CELL_INT);
         } break;
         default:
+            fprintf(stderr, "Impossible to compare cells of type %s.\n", CellTypeToString(a.ct));
             exit(1);
         break;
     }
@@ -142,7 +146,24 @@ ForthCell GreaterThan(ForthCell a, ForthCell b) {
             return ValueIntoCell((void *)&value, CELL_INT);
         } break;
         default:
+            fprintf(stderr, "Impossible to compare cells of type %s.\n", CellTypeToString(a.ct));
             exit(1);
         break;
     }
+}
+
+const char *CellTypeToString(CellType type) {
+    switch(type) {
+        case CELL_INT:
+            return "CELL_INTEGER";
+        break;
+        case CELL_STRING:
+            return "CELL_STRING";
+        break;
+        case CELL_VOID:
+            return "CELL_VOID";
+        break;
+    }
+
+    return "Unhandled Type in CellTypeToString Function";
 }

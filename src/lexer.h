@@ -14,15 +14,20 @@
 #include "token_list.h"
 
 typedef struct Lexer {
+    const char *fileName;
     char *source;
-    u64 position;
+    u64 line;
+    u64 rawPosition;
+    u64 linePosition;
     u64 size;
 } Lexer;
 
 Lexer InitializeLexer(const char *sourceFilePath);
 TokenList GenerateTokenList(const char *sourcePath);
 
-void ConsumeCharacter(Lexer *lexer);
+char ConsumeCharacter(Lexer *lexer);
 char PeekCharacter(Lexer *lexer);
+bool MatchAndConsume(Lexer *lexer, char symbol);
 
+void ReportError(Lexer *lexer, const char *errorMessage);
 #endif
