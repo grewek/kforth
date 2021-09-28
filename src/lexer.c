@@ -87,12 +87,12 @@ Token ScanValue(Lexer *lexer) {
 
     while(lexer->rawPosition < lexer->size) {
         //NOTE: When we hit a space character we found the end of the value literal.
-        
-        if(isspace(PeekCharacter(lexer))) {
+        char nextCharacter = PeekCharacter(lexer);
+        if(isspace(nextCharacter)) {
             break;
         }
 
-        if(isdigit(PeekCharacter(lexer))) {
+        if(isdigit(nextCharacter)) {
             ConsumeCharacter(lexer);
         } else {
             const char *errMessage = "Unknown Symbol in Value literal.";
@@ -110,9 +110,7 @@ Token ScanValue(Lexer *lexer) {
 Token ScanWord(Lexer *lexer) {
     Token result = {0};
     result.start  = lexer->rawPosition;
-    
-    ConsumeCharacter(lexer);
-    
+        
     while(lexer->rawPosition < lexer->size) {
         char nextCharacter = PeekCharacter(lexer);
 
@@ -178,7 +176,8 @@ Token ScanOperator(Lexer *lexer) {
     result.start = lexer->rawPosition;
     //TODO: There are symbols with more than one character i.e. comments, we need to handle these as well
     result.length = 1;
-    switch(lexer->source[lexer->rawPosition]) {
+    char currentChar = ConsumeCharacter(lexer);
+    switch(currentChar) {
         case ':':
             result.tt = T_COLON;
             result.repr.symbol = ':';
@@ -188,7 +187,6 @@ Token ScanOperator(Lexer *lexer) {
             result.repr.symbol = ';';
         break;
         case '.':
-            ConsumeCharacter(lexer);
             if(MatchAndConsume(lexer, '"')) {
                 result = ScanString(lexer);
             } else {
@@ -225,7 +223,7 @@ Token ScanOperator(Lexer *lexer) {
             result.repr.symbol = '>';
         break;
         default: {
-            const char *errMessage = "Tried to parse a symbol that is not part of the language.\n";
+            const char *errMessage = "Tried to parse a symbol that is not part of the language.";
             ReportError(lexer, errMessage);
         }
         break;
@@ -273,13 +271,7 @@ TokenList GenerateTokenList(const char *sourcePath)
             continue;
         }
         else if(ispunct(currentChar)) {
-            /*if(currentChar == '.' && PeekCharacter(&lexer) == '"') {
-                ConsumeCharacter(&lexer); // '.'
-                ConsumeCharacter(&lexer); // '"'
-                currentToken = ScanString(&lexer);
-            } else {*/
                 currentToken = ScanOperator(&lexer);
-            //}
         }
         else if(isspace(currentChar)) {
             ConsumeCharacter(&lexer);

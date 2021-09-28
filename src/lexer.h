@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "base_types.h"
+#include "token.h"
 #include "token_list.h"
 
 typedef struct Lexer {
@@ -28,6 +29,15 @@ TokenList GenerateTokenList(const char *sourcePath);
 char ConsumeCharacter(Lexer *lexer);
 char PeekCharacter(Lexer *lexer);
 bool MatchAndConsume(Lexer *lexer, char symbol);
+
+Token ScanValue(Lexer *lexer);
+Token ScanWord(Lexer *lexer);
+Token ScanString(Lexer *lexer);
+Token ScanOperator(Lexer *lexer);
+
+void ConsumeComment(Lexer *lexer);
+void WordToKeyword(Token *token);
+
 
 void ReportError(Lexer *lexer, const char *errorMessage);
 #endif
