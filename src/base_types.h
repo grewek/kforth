@@ -14,6 +14,6 @@ typedef int16_t i16;
 typedef int8_t i8;
 
 typedef float f32;
-typedef float f64;
+typedef double f64;
 
 #endif
