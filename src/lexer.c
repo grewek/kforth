@@ -241,6 +241,12 @@ void WordToKeyword(Token *token) {
         token->tt = T_DUP;
     } else if(strcmp(token->repr.buffer, "rot") == 0) {
         token->tt = T_ROTATE;
+    } else if(strcmp(token->repr.buffer, "if") == 0) {
+        token->tt = T_IF;
+    } else if(strcmp(token->repr.buffer, "then") == 0) {
+        token->tt = T_THEN;
+    } else if(strcmp(token->repr.buffer, "else") == 0) {
+        token->tt = T_ELSE;
     }
 }
 

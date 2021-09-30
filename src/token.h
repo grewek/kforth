@@ -20,6 +20,9 @@ typedef enum {
     T_WORD,
     T_STRING,
     T_ROTATE,
+    T_IF,
+    T_THEN,
+    T_ELSE,
 } TokenType;
 
 typedef struct {

@@ -3,12 +3,17 @@
 void RunFunction(ForthFunction *runningProgram, HashMap *availableFunctions, Stack *stack) {
     //NOTE: This can and probably will blow up the stack...but is there a way to call a function in
     //      a interpreter that does not rely on recursing ? I need to do some research here...
-    for(u64 i = 0; i < runningProgram->count; i++) {
-        ForthCell *funcKey = HandleOperation(&runningProgram->instructions[i], stack);
+    while(stack->instrPtr < runningProgram->count) {
+        ForthCell *funcKey = HandleOperation(&runningProgram->instructions[stack->instrPtr], stack);
 
+        
         if(funcKey && funcKey->ct == CELL_STRING) {
             ForthFunction *callee = GetValue(availableFunctions, funcKey->innerType.string.buffer, funcKey->innerType.string.size);
+            u32 oldInstrPtr = stack->instrPtr;
+            stack->instrPtr = 0;
             RunFunction(callee, availableFunctions, stack);
+            stack->instrPtr = oldInstrPtr;
+            stack->instrPtr += 1;
         }
     }
 }

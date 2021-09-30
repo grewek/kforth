@@ -34,6 +34,6 @@ i32 LessThanInt(i32 a, i32 b) {
 }
 
 i32 GreaterThanInt(i32 a, i32 b) {
-    i32 result = a > b ? -1.0 : 0.0;
+    i32 result = a > b ? -1 : 0;
     return result;
 }

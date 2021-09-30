@@ -63,6 +63,18 @@ void TernaryReferenceOperation(Stack *stack, TernaryRefOp op) {
     op(refA, refB, refC);
 }
 
+void TakeEqBranch(Stack *stack, ForthCell *cell) {
+    ForthCell value = Pop(stack);
+
+    if(value.innerType.integer == - 1) {
+        stack->instrPtr = cell->innerType.integer;
+    }
+}
+
+void Jump(Stack *stack, ForthCell *cell) {
+    stack->instrPtr = cell->innerType.integer;
+}
+
 ForthCell *HandleOperation(Instruction *cmd, Stack *stack) {
    switch(cmd->operation) {
         case PUSH:
@@ -90,15 +102,15 @@ ForthCell *HandleOperation(Instruction *cmd, Stack *stack) {
         break;
 
         case EQUAL:
-        BinaryOperation(stack, Equal, true);
+        BinaryOperation(stack, Equal, false);
         break;
 
         case GREATERTHAN:
-        BinaryOperation(stack, GreaterThan, true);
+        BinaryOperation(stack, GreaterThan, false);
         break;
 
         case LESSTHAN:
-        BinaryOperation(stack, LessThan, true);
+        BinaryOperation(stack, LessThan, false);
         break;
 
         case ROTATE:
@@ -128,7 +140,15 @@ ForthCell *HandleOperation(Instruction *cmd, Stack *stack) {
         case DEF_STRING:
         Push(stack, cmd->value);
         break;
+
+        case JMP:
+            Jump(stack, &cmd->value);
+        break;
+        case JMP_EQ:
+            TakeEqBranch(stack, &cmd->value);
+        break;
     }
 
+    stack->instrPtr += 1;
     return NULL;
 }

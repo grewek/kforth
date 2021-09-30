@@ -15,6 +15,7 @@ typedef struct {
     //TODO: The stack size should be determined at runtime...
     ForthCell values[STACK_SIZE];
     u32 stackPtr;
+    u32 instrPtr;
 } Stack;
 
 void Push(Stack *stack, ForthCell value);
