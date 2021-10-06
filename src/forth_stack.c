@@ -63,16 +63,16 @@ void TernaryReferenceOperation(Stack *stack, TernaryRefOp op) {
     op(refA, refB, refC);
 }
 
-void TakeEqBranch(Stack *stack, ForthCell *cell) {
+void TakeNotEqualBranch(Stack *stack, ForthCell *cell) {
     ForthCell value = Pop(stack);
 
-    if(value.innerType.integer == - 1) {
-        stack->instrPtr = cell->innerType.integer;
+    if(value.innerType.integer == 0) {
+        stack->instrPtr += cell->innerType.integer;
     }
 }
 
 void Jump(Stack *stack, ForthCell *cell) {
-    stack->instrPtr = cell->innerType.integer;
+    stack->instrPtr += cell->innerType.integer;
 }
 
 ForthCell *HandleOperation(Instruction *cmd, Stack *stack) {
@@ -141,11 +141,12 @@ ForthCell *HandleOperation(Instruction *cmd, Stack *stack) {
         Push(stack, cmd->value);
         break;
 
-        case JMP:
-            Jump(stack, &cmd->value);
+        case CONDITIONAL_GOTO:
+            TakeNotEqualBranch(stack, &cmd->value);
         break;
-        case JMP_EQ:
-            TakeEqBranch(stack, &cmd->value);
+
+        case UNCONDITIONAL_GOTO:
+            Jump(stack, &cmd->value);
         break;
     }
 

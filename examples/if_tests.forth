@@ -1,8 +1,13 @@
-: greaterFive dup 5 > if . ."is greater than five" else . ."is not greater than five" then ;
-: greaterFour dup 4 > if . ."is greater than four" then ;
-6 greaterFive .
-3 greaterFive . 
-1 1 + greaterFive .
-5 greaterFour .
-: plusFour 4 + ;
-2 plusFour greaterFive .
+(If statement examples taken from:
+https://www.forth.com/starting-forth/4-conditional-if-then-statements/)
+: full  12 = if  ."It's full"  then ;
+: toohot 220 > if ."Danger -- reduce heat" then ;
+: day  32 < if  ."Looks good" else  ."no way" then ;
+
+
+12 full .
+130 toohot
+224 toohot .
+10 day .
+32 day .
+17 eggsize .

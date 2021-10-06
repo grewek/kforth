@@ -24,7 +24,9 @@ void AddIntInstruction(ForthFunction *function, Operation operation, i32 value);
 void AddStringInstruction(ForthFunction *function, Operation operation, char *buffer, u32 size);
 void AddBranchInstructions(ForthFunction *function, u32 targetTrue, u32 targetFalse);
 void AddJumpInstruction(ForthFunction *function, Operation operation, u32 target);
-
+void AddConditionalGoto(ForthFunction *function);
+void AddUnconditionalGoto(ForthFunction *function);
+void InsertRelativePosition(ForthFunction *function, u32 instructionIndex, i32 relativePosition);
 
 void FreeFunction(ForthFunction *function);
 #endif

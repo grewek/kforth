@@ -49,16 +49,26 @@ void AddStringInstruction(ForthFunction *function, Operation operation, char *bu
     currentInstruction->value.innerType.string.size = size;
 }
 
-void AddBranchInstructions(ForthFunction *function, u32 targetTrue, u32 targetFalse) {
-    AddJumpInstruction(function, JMP_EQ, targetTrue);
-    AddJumpInstruction(function, JMP, targetFalse);
+void AddConditionalGoto(ForthFunction *function) {
+    Instruction *currentInstruction = GetNextFreeInstructionSlot(function);
+    currentInstruction->operation = CONDITIONAL_GOTO;
+    currentInstruction->value.ct = CELL_VOID;
 }
 
-void AddJumpInstruction(ForthFunction *function, Operation operation, u32 target) {
+void AddUnconditionalGoto(ForthFunction *function) {
     Instruction *currentInstruction = GetNextFreeInstructionSlot(function);
-    currentInstruction->operation = operation;
-    currentInstruction->value.ct = CELL_INT;
-    currentInstruction->value.innerType.integer = target;
+    currentInstruction->operation = UNCONDITIONAL_GOTO;
+    currentInstruction->value.ct = CELL_VOID;
+}
+
+void InsertRelativePosition(ForthFunction *function, u32 instructionIndex, i32 realtivePosition) {
+    Instruction *gotoInstruction = &function->instructions[instructionIndex];
+    
+    if((gotoInstruction->operation == CONDITIONAL_GOTO || gotoInstruction->operation == UNCONDITIONAL_GOTO) && 
+        gotoInstruction->value.ct == CELL_VOID) {
+        gotoInstruction->value.ct = CELL_INT;
+        gotoInstruction->value.innerType.integer = realtivePosition;
+    }
 }
 
 void FreeFunction(ForthFunction *function) {

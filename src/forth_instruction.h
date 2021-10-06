@@ -21,8 +21,8 @@ typedef enum Operation {
     WORD,
     DEF_STRING,
     ROTATE,
-    JMP,
-    JMP_EQ,
+    CONDITIONAL_GOTO,
+    UNCONDITIONAL_GOTO
 } Operation;
 
 typedef struct Instruction {

@@ -15,35 +15,27 @@
 
 void ParseExpression(ForthFunction *prog, TokenList *tokenList);
 
-u32 FindPositionOfToken(TokenList *tokenList, TokenType searchedToken) {
-    u32 position = 0;
-    //TODO: This looks and feels hackish i should really figure out a better
-    //      way to handle branches...
-    //NOTE: Also we are using internal fields of the tokenlist here so we either
-    //      move this into the tokenlist file or we find a better way to handle branches!
-    for(u32 i = tokenList->_head; i < tokenList->_elementCount; i++) {
-        
-        if(tokenList->_tokens[i].tt == searchedToken)
-            return position;
+void CalculateBranchSize(ForthFunction *prog, TokenList *tokenList) {
+    //TODO: Should this only calculate the branch size and not set it ?
+    u32 markerStart = prog->count - 1;
+    PopToken(tokenList);
+    ParseExpression(prog, tokenList);
+    u32 markerEnd = prog->count;
+    i32 branchSize = markerEnd - markerStart;
+    
+    InsertRelativePosition(prog, markerStart, branchSize);
+}
 
-        switch(tokenList->_tokens[i].tt) {
-            case T_IF:
-                //NOTE: Add two instructions here as we need to push a Jump on Equal and a normal Jump on our instruction list.
-                position += 2;
-            break;
-            case T_COLON:
-            case T_SEMICOLON:
-                //NOTE: These aren't really instruction they just ask the parser to start/end a function. So they don't get counted.
-                continue;
-            break;
-            default:
-                //NOTE: Everything else is right now one instruction long.
-                position += 1;
-            break;
-        }
+void ParseIfStatement(ForthFunction *prog, TokenList *tokenList) {
+    //TODO: Currently there is no support for nested if then statements.
+    AddConditionalGoto(prog);
+    CalculateBranchSize(prog, tokenList);
+
+    if(PeekToken(tokenList)->tt == T_ELSE) {
+        AddUnconditionalGoto(prog);
+        CalculateBranchSize(prog, tokenList);
     }
-
-    return -1;
+    
 }
 
 void ParseStatement(ForthFunction *prog, HashMap *functions, TokenList *tokenList) {
@@ -55,19 +47,20 @@ void ParseStatement(ForthFunction *prog, HashMap *functions, TokenList *tokenLis
         switch(currentToken->tt) {
 
             case T_IF: {
-                u32 ifAddress = prog->count + 1;
-                u32 elseAddress = prog->count + FindPositionOfToken(tokenList, T_ELSE);
-                AddBranchInstructions(prog, ifAddress, elseAddress);
+                ParseIfStatement(prog, tokenList);
             } break;
             
             case T_THEN: {
-                //TODO: Silently ignores multiple "then" keywords in a nested if statement ! Needs fixing.
+                //TODO: Get's handled in the T_IF case as it belongs to a if statement and cannot be parsed alone !
+                //TODO: If we hit this case anyway a error was made by the user and we should report it !
+                //      i.e. "found then without if" or something like that...
             }
             break;
             
             case T_ELSE: {
-                u32 thenAddress = prog->count + FindPositionOfToken(tokenList, T_THEN);
-                AddJumpInstruction(prog, JMP, thenAddress);
+                //TODO: Get's handled in the T_IF case as it belongs to a if statement and cannot be parsed alone !
+                //TODO: If we hit this case anyway a error was made by the user and we should report it !
+                //      i.e. "found else without if" or something like that...
             } break;
 
             case T_COLON:
