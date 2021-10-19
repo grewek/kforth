@@ -5,7 +5,6 @@
 #include <stdlib.h>
 
 #include "base_types.h"
-#include "integer_operations.h"
 
 typedef enum CellType {
     CELL_VOID,

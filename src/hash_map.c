@@ -1,49 +1,42 @@
 #include "hash_map.h"
 
-HashMap InitializeHashMap() {
+HashMap InitializeHashMap() 
+{
     HashMap result = {0};
-    result.size = HASHMAP_DEFAULT_SIZE;
-    result._functions = calloc(result.size, sizeof(ForthFunction));
+    result._size = HASHMAP_DEFAULT_SIZE;
+    result._addrBook = calloc(result._size, sizeof(u32));
 
-    if(result._functions == NULL) {
-        fprintf(stderr, "ERROR: Failed to reserve memory for the Function Hashmap.\n");
+    if(result._addrBook == NULL) {
+        fprintf(stderr, 
+            "ERROR: Failed to reserve memory for the Function Hashmap.\n");
         exit(1);
     }
 
     return result;
 }
 
-ForthFunction *EmptyFunctionWithKey(HashMap *map, char *key, u64 size) {    
-    u64 index = _GenerateHashValue(key, size) % map->size;
-    ForthFunction emptyFunction = InitializeFunction(128);
-    memcpy(map->_functions + index, &emptyFunction, sizeof(ForthFunction));
-
-    return map->_functions + index;
-}
-
-void InsertKeyValuePair(HashMap *map, char *key, u64 size, ForthFunction *value) {
+void InsertKeyValuePair(HashMap *map, char *key, u64 size, u32 value) 
+{
     
-    u64 index = _GenerateHashValue(key, size) % map->size;
-
-    memcpy(map->_functions + index, value, sizeof(ForthFunction));
+    u64 index = _GenerateHashValue(key, size) % map->_size;
+    map->_addrBook[index] = value;
 }
 
-ForthFunction *GetValue(HashMap *map, char *key, u64 size) {
-    u64 index = _GenerateHashValue(key, size) % map->size;
+u32 GetAddressFromLable(HashMap *map, char *key, u32 size) 
+{
+    u64 index = _GenerateHashValue(key, size) % map->_size;
 
-    return &map->_functions[index];
+    return map->_addrBook[index];
 }
 
-void FreeHashMap(HashMap *map) {
-    for(u64 i = 0; i < map->size; i++) {
-        FreeFunction(&map->_functions[i]);
-    }
-
-    free(map->_functions);
-    map->_functions = NULL;
+void FreeHashMap(HashMap *map) 
+{
+    free(map->_addrBook);
+    map->_addrBook = NULL;
 }
 
-u64 _GenerateHashValue(char *key, u64 size) {
+u64 _GenerateHashValue(char *key, u64 size) 
+{
     const u64 prime = 31;
     u64 hashValue = 0;
     for(u64 i = 0; i < size; i++) {
