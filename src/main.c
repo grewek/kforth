@@ -11,10 +11,7 @@
 
 #include "forth_vm.h"
 #include "forth_vm_backend.h"
-//#include "forth_stack.h"
 #include "forth_parser.h"
-//#include "forth_function.h"
-//#include "forth_evaluator.h"
 
 int main(int argc, char **argv) 
 {
@@ -25,26 +22,18 @@ int main(int argc, char **argv)
 
     const char *path = argv[1];
 
-    u32 instructions[128] = {0};
-    u64 addresses[1024] = {0};
-    Generator gen = InitializeGenerator(instructions, 32);
     TokenList list = GenerateTokenList(path);
 
-    Parser parser = {0};
-    parser.tokens = &list;
-    parser.addressBook = addresses;
-    parser.gen = &gen;
+    Parser parser = InitializeParser(list);
 
-    Parse(parser);
-    RetrieveByteCode(&gen);
-    
+    Parse(&parser);
 
     ForthVM vm = {
         .stack = {0},
         .sp = 0,
 
-        .instructions = instructions,
-        .pc = GetFunctionAddress(parser, "main", 4),
+        .instructions = RetrieveByteCode(&parser.gen),
+        .pc = GetFunctionAddress(&parser, "main", 4),
     };
 
     while(true) {

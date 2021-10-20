@@ -2,6 +2,7 @@
 
 void InsertPushOpcode(Generator *gen, u32 value) 
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_PUSH;
     gen->memory[gen->instructionCount + 1] = value;
     gen->instructionCount += 2;
@@ -9,11 +10,13 @@ void InsertPushOpcode(Generator *gen, u32 value)
 
 void InsertPopOpcode(Generator *gen)
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_POP;
 }
 
 void InsertCallOpcode(Generator *gen, u32 address)
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_CALL;
     gen->memory[gen->instructionCount + 1] = address;
     gen->instructionCount += 2;
@@ -21,12 +24,14 @@ void InsertCallOpcode(Generator *gen, u32 address)
 
 void InsertRetOpcode(Generator *gen)
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_RET;
     gen->instructionCount += 1;
 }
 
 void InsertGotoOpcode(Generator *gen, u32 offset)
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_GOTO;
     gen->memory[gen->instructionCount + 1] = offset;
 
@@ -35,6 +40,7 @@ void InsertGotoOpcode(Generator *gen, u32 offset)
 
 void InsertIfGotoOpcode(Generator *gen, u32 offset)
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_IF_GOTO;
     gen->memory[gen->instructionCount + 1] = offset;
 
@@ -43,80 +49,93 @@ void InsertIfGotoOpcode(Generator *gen, u32 offset)
 
 void InsertEqOpcode(Generator *gen)
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_EQ;
     gen->instructionCount += 1;
 }
 
 void InsertGtOpcode(Generator *gen)
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_GT;
     gen->instructionCount += 1;
 }
 
 void InsertLtOpcode(Generator *gen)
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_LT;
     gen->instructionCount += 1;
 }
 
 void InsertAddOpcode(Generator *gen) 
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_ADD;
     gen->instructionCount += 1;
 }
 
 void InsertSubOpcode(Generator *gen)
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_SUB;
     gen->instructionCount += 1;
 }
 
 void InsertMulOpcode(Generator *gen)
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_MUL;
     gen->instructionCount += 1;
 }
 
 void InsertDivOpcode(Generator *gen)
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_DIV;
     gen->instructionCount += 1;
 }
 
 void InsertNopOpcode(Generator *gen)
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_NOP;
     gen->instructionCount += 1;
 }
 
 void InsertDotOpcode(Generator *gen)
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_DOT;
     gen->instructionCount += 1;
 }
 
 void InsertSwapOpcode(Generator *gen)
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_SWAP;
     gen->instructionCount += 1;
 }
 
 void InsertDupOpcode(Generator *gen)
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_DUP;
     gen->instructionCount += 1;
 }
 
 void InsertRotateOpcode(Generator *gen)
 {
+    assert(gen->instructionCount < gen->maxSize);
     gen->memory[gen->instructionCount] = (u32)OPCODE_ROTATE;
     gen->instructionCount += 1;
 }
 
-Generator InitializeGenerator(u32 *memory, u32 maxSize) {
+Generator InitializeGenerator(u32 maxSize) {
     Generator result = {0};
 
-    result.memory = memory;
+    result.memory = calloc(maxSize, sizeof(u32));
+    assert(result.memory);
     result.maxSize = maxSize;
 
     return result;
@@ -130,8 +149,7 @@ u32 *RetrieveByteCode(Generator *gen) {
 
 void vm__backend_test_opcode_generation()
 {
-    u32 instructions[32] ={0};
-    Generator gen = InitializeGenerator(instructions, 32);
+    Generator gen = InitializeGenerator(32);
 
     InsertPushOpcode(&gen, 2);
     InsertPushOpcode(&gen, 2);

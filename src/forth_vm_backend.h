@@ -13,7 +13,7 @@ typedef struct Generator {
     u32 entryPoint;
 } Generator;
 
-Generator InitializeGenerator(u32 *memory, u32 maxSize);
+Generator InitializeGenerator(u32 maxSize);
 u32 *RetrieveByteCode(Generator *gen);
 
 void vm__backend_test_opcode_generation();

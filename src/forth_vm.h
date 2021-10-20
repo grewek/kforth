@@ -1,6 +1,8 @@
 #ifndef _FORTH_VM_
 #define _FORTH_VM_
 
+#include <assert.h>
+#include <limits.h>
 #include <stdbool.h>
 
 #include "base_types.h"

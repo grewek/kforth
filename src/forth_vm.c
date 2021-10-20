@@ -21,6 +21,7 @@ u32 ExecuteByteCode(ForthVM *vm)
             opcodeLength = 1;
         break;
         case OPCODE_CALL:
+            assert(argA != UINT_MAX);
             VM_Call(vm, argA);
             opcodeLength = 0;
         break;
