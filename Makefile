@@ -1,5 +1,5 @@
 SRC = src/
-CFLAGS = -Wall -Wpedantic -Werror -Wextra -g -O0 -std=c11
+CFLAGS = -DLINUX_BUILD -Wall -Wpedantic -Werror -Wextra -g -O0 -std=c11
 OBJDEST = objs/
 EXEC = bin/kforth
 
