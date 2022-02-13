@@ -1,4 +1,10 @@
 .vscode/
+Debug/
+Release/
 bin/
 objs/
 main
+
+*.suo
+*.user
+*.sln.docstates

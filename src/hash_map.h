@@ -6,7 +6,13 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <unistd.h>
+
+#ifdef LINUX_BUILD
+    #include <unistd.h>
+#endif
+
+#ifdef WIN32_BUILD
+#endif
 
 #include "base_types.h"
 

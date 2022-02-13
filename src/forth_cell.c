@@ -1,6 +1,6 @@
 #include "forth_cell.h"
 
-ForthCell ValueIntoCell(void *value, CellType ct) {
+/*ForthCell ValueIntoCell(void *value, CellType ct) {
     ForthCell result;
 
     switch(ct) {
@@ -166,4 +166,4 @@ const char *CellTypeToString(CellType type) {
     }
 
     return "Unhandled Type in CellTypeToString Function";
-}
+}*/

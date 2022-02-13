@@ -6,18 +6,19 @@ void ReportError(Lexer *lexer, const char *errorMessage) {
 }
 
 
-Lexer InitializeLexer(const char *sourceFilePath) {
-    Lexer result = {0};
+Lexer InitializeLexer(const char* sourceFilePath) {
+    Lexer result = { 0 };
     result.line = 1; //NOTE: We start at line one not at line zero in the source file.
+#ifdef LINUX_BUILD
     struct stat st;
     stat(sourceFilePath, &st);
 
-    FILE *source = fopen(sourceFilePath, "r");
+    FILE* source = fopen(sourceFilePath, "r");
     result.size = st.st_size;
     result.fileName = sourceFilePath;
     result.source = calloc(st.st_size, sizeof(char));
 
-    if(result.source == NULL) {
+    if (result.source == NULL) {
         fprintf(stderr, "ERROR: Could not allocate memory for the source file !");
         fclose(source);
         exit(EXIT_FAILURE);
@@ -26,13 +27,44 @@ Lexer InitializeLexer(const char *sourceFilePath) {
     u64 readBytes = fread(result.source, 1, result.size, source);
     fclose(source);
 
-    if(readBytes < result.size) {
+    if (readBytes < result.size) {
         fprintf(stderr, "ERROR: Could not read the whole filestream");
         free(result.source);
         fclose(source);
         exit(EXIT_FAILURE);
     }
+#endif
+#ifdef WINDOWS_BUILD
+    OFSTRUCT info = { 0 };
+    HFILE fileHandle = OpenFile(sourceFilePath, &info, OF_READ);
 
+    if (fileHandle == HFILE_ERROR) {
+        exit(EXIT_FAILURE);
+    }
+
+    DWORD fileSize = GetFileSize(fileHandle, 0);
+
+
+    result.size = fileSize;
+    result.fileName = sourceFilePath;
+    result.source = calloc(fileSize + 1, sizeof(char));
+
+    DWORD sizeRead;
+    BOOL successfullyReadFile = ReadFile(fileHandle, result.source, fileSize, &sizeRead, 0);
+
+    if (result.source == NULL) {
+        fprintf(stderr, "ERROR: Could not allocate memory for the source file !");
+        CloseHandle(fileHandle);
+        exit(EXIT_FAILURE);
+    }
+
+    if (sizeRead < fileSize) {
+        fprintf(stderr, "ERROR: Could not read the whole filestream");
+        free(result.source);
+        CloseHandle(fileHandle);
+        exit(EXIT_FAILURE);
+    }
+#endif
     return result;
 }
 

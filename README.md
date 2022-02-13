@@ -1,21 +1,28 @@
 # kforth
 
-Under heavy development, currently only supports arithmetic expression.
+Warning the interpreter is under development and is in a very fragile state it might crash or
+hang on usage. 
+
+It currently only supports expressions functions and if statements. 
+
+
 # Usage
 Run a kforth program.
 
 `kforth <filepath>`
 
 
-# TODO:
+# Build
 
-A high level overview of what needs to be done
+## Linux
+1. Make sure you have either gcc or clang installed.
+2. On the commandline type the following command.
 
-* The parser has some repetition that needs to be cleaned up !
-* I lost string support in the new vm so i need add it again.
-* I still need to handle variables, memory and while loops.
-* The parser needs more and better error handling.
-* The replaceTable structure should be moved out of the parser, instead
-we should add some kind of "linking" phase that resolves all symbols.
-* We need to free memory valgrind is a bit concerned about my lighthearted memory usage :)
+`make kforth`
 
+3. You find the executable compiler inside the bin folder of the project.
+4. If you want you can try to execute the examples inside the examples folder.
+
+## Windows
+1. Open the supplied solution file in Visual Studio 2019
+2. Just build the project and find the executable inside the Debug, Release folders.

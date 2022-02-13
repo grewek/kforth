@@ -26,7 +26,7 @@ typedef struct ForthCell {
     } innerType;
 } ForthCell;
 
-ForthCell ValueIntoCell(void *value, CellType ct);
+/*ForthCell ValueIntoCell(void *value, CellType ct);
 
 ForthCell Plus(ForthCell a, ForthCell b);
 ForthCell Minus(ForthCell a, ForthCell b);
@@ -37,5 +37,5 @@ ForthCell Equal(ForthCell a, ForthCell b);
 ForthCell LessThan(ForthCell a, ForthCell b);
 ForthCell GreaterThan(ForthCell a, ForthCell b);
 
-const char *CellTypeToString(CellType type);
+const char *CellTypeToString(CellType type);*/
 #endif

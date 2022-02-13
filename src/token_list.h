@@ -5,8 +5,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <unistd.h>
 
+#ifdef LINUX_BUILD
+    #include <unistd.h>
+#endif
+
+#ifdef WINDOWS_BUILD
+    #include <windows.h>
+#endif
 #include "base_types.h"
 #include "token.h"
 

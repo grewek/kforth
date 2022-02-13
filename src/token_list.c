@@ -5,7 +5,16 @@ TokenList InitializeTokenList() {
 
     result._elementCount = 0;
     result._head = 0;
+    
+#ifdef LINUX_BUILD
     result._pageSize = sysconf(_SC_PAGE_SIZE);
+#endif
+
+#ifdef WINDOWS_BUILD
+    SYSTEM_INFO info = { 0 };
+    GetSystemInfo(&info);
+    result._pageSize = info.dwPageSize;
+#endif WINDOWS_BUILD
     result._pageCount = 1;
     result._maxElementCount = (result._pageSize * result._pageCount) / sizeof(Token);
 

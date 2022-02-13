@@ -23,10 +23,10 @@ typedef enum {
     T_IF,
     T_THEN,
     T_ELSE,
-} TokenType;
+} ForthTokenType;
 
 typedef struct {
-    TokenType tt;
+    ForthTokenType tt;
 
     u64 start;
     u64 length;
