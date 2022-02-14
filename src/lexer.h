@@ -6,8 +6,10 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
+#ifdef LINUX_BUILD
+    #include <sys/types.h>
+    #include <sys/stat.h>
+#endif
 #include <string.h>
 
 #include "base_types.h"

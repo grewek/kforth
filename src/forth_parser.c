@@ -360,6 +360,7 @@ void ReportParserError(const char *message)
 
 Parser InitializeParser(TokenList tokens)
 {
+    //TODO: This needs to be moved from the stack into the heap
     Parser result = {0};
     result.gen = InitializeGenerator(256);
     result.tokens = tokens;
