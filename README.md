@@ -1,9 +1,9 @@
 # kforth
 
-Warning the interpreter is under development and is in a very fragile state it might crash or
+Warning the interpreter is under development and is in a very fragile state. It might crash or
 hang on usage. 
 
-It currently only supports expressions functions and if statements. 
+It currently only supports arithmetic expressions, functions and if statements. 
 
 
 # Usage
@@ -25,4 +25,4 @@ Run a kforth program.
 
 ## Windows
 1. Open the supplied solution file in Visual Studio 2019
-2. Just build the project and find the executable inside the Debug, Release folders.
+2. Just build the project and find the executable file inside the Debug or Release folders. 
